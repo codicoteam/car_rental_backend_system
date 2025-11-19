@@ -40,7 +40,6 @@ const VehicleModelSchema = new Schema(
     images: {
       type: [String],
       default: [],
-
     },
   },
   {

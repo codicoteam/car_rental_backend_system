@@ -6,13 +6,12 @@ const MetadataSchema = new Schema(
   {
     gps_device_id: { type: String, trim: true },
     notes: { type: String, trim: true },
-    seats:{ type: Number, min: 1, max: 20  },
-    doors:{ type: Number, min: 2, max: 6  },
+    seats: { type: Number, min: 1, max: 20 },
+    doors: { type: Number, min: 2, max: 6 },
     features: {
       type: [String],
       enum: ["ac", "bluetooth", "gps", "child_seat", "4x4"],
     },
-
   },
   { _id: false }
 );
@@ -58,6 +57,11 @@ const VehicleSchema = new Schema(
       default: "available",
       index: true,
     },
+    photos: {
+      type: [String],
+      default: [],
+    },
+
     // NEW: last service info
     last_service_at: { type: Date, default: null }, // date of last service
     last_service_odometer_km: { type: Number, min: 0, default: null }, // odo at last service (optional)

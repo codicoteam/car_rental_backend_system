@@ -9,6 +9,7 @@ const PaymentSchema = new Schema(
       required: true,
       index: true,
     },
+
     user_id: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -21,17 +22,16 @@ const PaymentSchema = new Schema(
       enum: ["stripe", "paynow", "ecocash", "bank_transfer", "cash"],
       required: true,
     },
+
     method: {
       type: String,
       enum: ["card", "wallet", "bank", "cash"],
       required: true,
     },
 
-    // amount authorized/captured for the transaction
     amount: { type: Schema.Types.Decimal128, required: true },
     currency: { type: String, enum: ["USD", "ZWL"], required: true },
 
-    // ✅ New status per your spec
     paymentStatus: {
       type: String,
       enum: [
@@ -48,13 +48,13 @@ const PaymentSchema = new Schema(
       index: true,
     },
 
-    // ✅ New fields per your spec
     pollUrl: { type: String, default: "not available", trim: true },
-    pricePaid: { type: Number, required: true }, // keep as Number as requested
+
+    pricePaid: { type: Number, required: true },
+
     boughtAt: { type: Date, default: Date.now },
 
-    // PSP references & timestamps
-    provider_ref: { type: String, trim: true }, // transaction/charge id from PSP
+    provider_ref: { type: String, trim: true },
     captured_at: { type: Date, default: null },
 
     refunds: [
@@ -70,6 +70,19 @@ const PaymentSchema = new Schema(
       card_last4: { type: String, trim: true },
       card_brand: { type: String, trim: true },
     },
+
+    promo_code_id: {
+      type: Schema.Types.ObjectId,
+      ref: "PromoCode",
+      default: null,
+      index: true,
+    },
+
+    promo_code: {
+      type: String,
+      trim: true,
+      default: null,    // snapshot (WELCOME10 etc.)
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
@@ -77,8 +90,9 @@ const PaymentSchema = new Schema(
   }
 );
 
-// Useful indexes
+// Indexes
 PaymentSchema.index({ reservation_id: 1, paymentStatus: 1 });
 PaymentSchema.index({ provider_ref: 1 }, { sparse: true });
+PaymentSchema.index({ promo_code_id: 1 });
 
 module.exports = mongoose.model("Payment", PaymentSchema);

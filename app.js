@@ -1,106 +1,60 @@
-require('dotenv').config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const dotenv = require("dotenv");
 
-const createError = require('http-errors');
-const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-const exphbs = require('express-handlebars');
-const mongoose = require('mongoose');
-const compression = require('compression');
+// Swagger setup
+const setupSwagger = require("./middlewares/swagger"); // make sure the path is correct
 
-const electricRouter = require('./routes/electric_index');
-const gasRouter = require('./routes/gas_index');
-const adminRouter = require('./routes/admin');
-var UserModel = require("./models/CustomerModel");
+// Routers
+const userRouter = require("./routers/user_router"); // example router
+const profileRouter = require("./routers/profile_router");
+const vehicleRouter = require("./routers/vehicle_router");
+const vehicleUnitRouter = require("./routers/vehicle_unit_router");
+const reservationsRouter = require("./routers/reservations_router");
+const ratePlanRouter = require("./routers/rate_plan_router");
+const branchRouter = require("./routers/branch_router");
+const promoCodeRouter = require("./routers/promo_code_router");
+
+// Load environment variables
+dotenv.config();
+
+// Database connectionnode
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("Database connected successfully"))
+  .catch((err) => console.error("Error connecting to the database:", err));
+
 const app = express();
 
-
-//Connecting to Mongodb
-const db = async () => {
-    try {
-        const conn = await mongoose.connect('mongodb://localhost:27017/autorizz', {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            useFindAndModify: false
-        });
-
-        console.log("MongoDB connected");
-
-    } catch (err) {
-        console.log("MongoDB Error : Failed to connect");
-        console.log(err);
-        process.exit(1);
-    }
-}
-
-db();
-
-
-// view engine setup
-app.engine('.hbs', exphbs({
-    defaultLayout: 'layout', extname: '.hbs',
-    runtimeOptions: {
-        allowProtoPropertiesByDefault: true,
-        allowProtoMethodsByDefault: true,
-    }
-}));
-app.set('view engine', '.hbs');
-
-app.use(logger('dev'));
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(compression());
 
-console.log("App running on Localhost:5000");
+// Swagger docs
+setupSwagger(app);
 
-
-// Routing
-app.get('/', (req, res) => {
-    res.redirect('/home');
+// Routes
+// const userRouter = require("./routers/user_router");
+app.use("/api/v1/users", userRouter);
+app.use("/api/v1/profiles", profileRouter);
+app.use("/api/v1/vehicle-models", vehicleRouter);
+app.use("/api/v1/vehicles", vehicleUnitRouter);
+app.use("/api/v1/reservations", reservationsRouter);
+app.use("/api/v1/rate-plans", ratePlanRouter);
+app.use("/api/v1/branches", branchRouter);
+app.use("/api/v1/promo-codes", promoCodeRouter);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!" });
 });
 
+const PORT = process.env.PORT || 8080;
 
-app.get('/home', function (req, res) {
-    res.sendFile(__dirname + "/routes/home.html");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
 });
-
-app.use('/admin', adminRouter);
-app.use('/electric', electricRouter);
-app.use('/gas', gasRouter);
-
-
-//Users
-app.post('/customer', async (req, res) => {
-
-    const user = new UserModel({
-        name: req.body.username,
-        email: req.body.useremail,
-        phone: req.body.userphone
-    })
-
-    const user_res = await user.save();
-    console.log(user_res);
-});
-
-
-
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-    next(createError(404));
-});
-
-// error handler
-app.use(function (err, req, res, next) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-    // render the error page
-    res.status(err.status || 500);
-    res.render('error');
-});
-
-module.exports = app;
