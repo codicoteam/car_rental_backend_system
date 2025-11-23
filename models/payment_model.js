@@ -3,13 +3,23 @@ const { Schema } = mongoose;
 
 const PaymentSchema = new Schema(
   {
+    // 🔗 Car reservation (optional now)
     reservation_id: {
       type: Schema.Types.ObjectId,
       ref: "Reservation",
-      required: true,
+      default: null,
       index: true,
     },
 
+    // 🔗 Driver booking (new, optional)
+    driver_booking_id: {
+      type: Schema.Types.ObjectId,
+      ref: "DriverBooking",
+      default: null,
+      index: true,
+    },
+
+    // Who is paying
     user_id: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -50,6 +60,7 @@ const PaymentSchema = new Schema(
 
     pollUrl: { type: String, default: "not available", trim: true },
 
+    // Keep as Number as you wanted
     pricePaid: { type: Number, required: true },
 
     boughtAt: { type: Date, default: Date.now },
@@ -71,17 +82,17 @@ const PaymentSchema = new Schema(
       card_brand: { type: String, trim: true },
     },
 
+    // 🔗 Promo snapshot (optional)
     promo_code_id: {
       type: Schema.Types.ObjectId,
       ref: "PromoCode",
       default: null,
-      index: true,
     },
 
     promo_code: {
       type: String,
       trim: true,
-      default: null,    // snapshot (WELCOME10 etc.)
+      default: null, // snapshot of the code text (WELCOME10 etc.)
     },
   },
   {
@@ -90,8 +101,23 @@ const PaymentSchema = new Schema(
   }
 );
 
+/**
+ * Validation: must be linked to either a reservation OR a driver booking.
+ */
+PaymentSchema.pre("validate", function (next) {
+  if (!this.reservation_id && !this.driver_booking_id) {
+    return next(
+      new Error(
+        "Payment must reference either a reservation_id or a driver_booking_id."
+      )
+    );
+  }
+  next();
+});
+
 // Indexes
 PaymentSchema.index({ reservation_id: 1, paymentStatus: 1 });
+PaymentSchema.index({ driver_booking_id: 1, paymentStatus: 1 }); // for driver bookings
 PaymentSchema.index({ provider_ref: 1 }, { sparse: true });
 PaymentSchema.index({ promo_code_id: 1 });
 

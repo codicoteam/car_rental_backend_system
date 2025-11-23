@@ -22,7 +22,7 @@ const managerOrAdmin = requireRoles("manager", "admin");
  * @swagger
  * /api/v1/users/register:
  *   post:
- *     summary: Register a new customer user
+ *     summary: Register a new customer user (OTP will be sent to email)
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -49,7 +49,7 @@ const managerOrAdmin = requireRoles("manager", "admin");
  *                 example: StrongPassword123!
  *     responses:
  *       201:
- *         description: User registered successfully
+ *         description: Registration started, OTP sent
  *         content:
  *           application/json:
  *             schema:
@@ -62,9 +62,11 @@ const managerOrAdmin = requireRoles("manager", "admin");
  *                 data:
  *                   type: object
  *                   properties:
- *                     user:
- *                       $ref: '#/components/schemas/User'
- *                     token:
+ *                     userId:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     status:
  *                       type: string
  *       400:
  *         description: Validation error
@@ -72,6 +74,40 @@ const managerOrAdmin = requireRoles("manager", "admin");
  *         description: Server error
  */
 router.post("/register", userController.registerUser);
+
+/**
+ * @swagger
+ * /api/v1/users/verify-email:
+ *   post:
+ *     summary: Verify email using OTP (after registration)
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Email verified successfully, token returned
+ *       400:
+ *         description: Invalid or expired OTP
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/verify-email", userController.verifyEmail);
 
 /**
  * @swagger
@@ -118,6 +154,8 @@ router.post("/register", userController.registerUser);
  *         description: Validation error
  *       401:
  *         description: Invalid credentials
+ *       403:
+ *         description: Account not active
  *       500:
  *         description: Server error
  */
@@ -134,15 +172,6 @@ router.post("/login", userController.loginUser);
  *     responses:
  *       200:
  *         description: Current user profile
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
  */
@@ -180,6 +209,64 @@ router.patch("/me", authMiddleware, userController.updateProfile);
 
 /**
  * @swagger
+ * /api/v1/users/me/request-delete:
+ *   post:
+ *     summary: Request account deletion (send OTP to email)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: OTP sent to email
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post(
+  "/me/request-delete",
+  authMiddleware,
+  userController.requestDeleteAccount
+);
+
+/**
+ * @swagger
+ * /api/v1/users/me/confirm-delete:
+ *   post:
+ *     summary: Confirm account deletion with OTP
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - otp
+ *             properties:
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *       400:
+ *         description: Invalid or expired OTP
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post(
+  "/me/confirm-delete",
+  authMiddleware,
+  userController.confirmDeleteAccount
+);
+
+/**
+ * @swagger
  * /api/v1/users:
  *   get:
  *     summary: List users (Admin/Manager only)
@@ -191,12 +278,12 @@ router.patch("/me", authMiddleware, userController.updateProfile);
  *         name: status
  *         schema:
  *           type: string
- *           enum: [active, suspended, deleted]
+ *           enum: [pending, active, suspended, deleted]
  *       - in: query
  *         name: role
  *         schema:
  *           type: string
- *           enum: [customer, agent, manager, admin]
+ *           enum: [customer, agent, manager, admin, driver]
  *       - in: query
  *         name: page
  *         schema:
@@ -210,32 +297,116 @@ router.patch("/me", authMiddleware, userController.updateProfile);
  *     responses:
  *       200:
  *         description: List of users
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     users:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/User'
- *                     total:
- *                       type: integer
- *                     page:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     totalPages:
- *                       type: integer
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden
+ */
+router.get("/", authMiddleware, managerOrAdmin, userController.getUsers);
+
+// 🔥 FORGOT PASSWORD – REQUEST OTP
+/**
+ * @swagger
+ * /api/v1/users/forgot-password/request-otp:
+ *   post:
+ *     summary: Request password reset OTP
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *     responses:
+ *       200:
+ *         description: OTP sent if email exists
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post(
+  "/forgot-password/request-otp",
+  userController.forgotPasswordRequest
+);
+
+// 🔥 FORGOT PASSWORD – RESET
+/**
+ * @swagger
+ * /api/v1/users/forgot-password/reset:
+ *   post:
+ *     summary: Reset password using OTP
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *               - new_password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: john@example.com
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *               new_password:
+ *                 type: string
+ *                 example: NewStrongPassword123!
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid request or OTP
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/forgot-password/reset", userController.forgotPasswordReset);
+
+/**
+ * @swagger
+ * /api/v1/users:
+ *   get:
+ *     summary: List users (Admin/Manager only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, active, suspended, deleted]
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [customer, agent, manager, admin, driver]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: List of users
  */
 router.get("/", authMiddleware, managerOrAdmin, userController.getUsers);
 
@@ -295,10 +466,10 @@ router.get("/:id", authMiddleware, managerOrAdmin, userController.getUserById);
  *                 type: array
  *                 items:
  *                   type: string
- *                   enum: [customer, agent, manager, admin]
+ *                   enum: [customer, agent, manager, admin, driver]
  *               status:
  *                 type: string
- *                 enum: [active, suspended, deleted]
+ *                 enum: [pending, active, suspended, deleted]
  *     responses:
  *       200:
  *         description: User updated successfully
@@ -337,7 +508,7 @@ router.patch("/:id", authMiddleware, managerOrAdmin, userController.updateUser);
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [active, suspended, deleted]
+ *                 enum: [pending, active, suspended, deleted]
  *                 example: suspended
  *     responses:
  *       200:

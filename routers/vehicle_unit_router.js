@@ -19,7 +19,7 @@ const managerOrAdmin = requireRoles("manager", "admin");
 
 /**
  * @swagger
- * /api/vehicles:
+ * /api/v1/vehicles:
  *   post:
  *     summary: Create a vehicle unit
  *     description: Only manager or admin can create vehicles.
@@ -107,7 +107,7 @@ router.post(
 
 /**
  * @swagger
- * /api/vehicles:
+ * /api/v1/vehicles:
  *   get:
  *     summary: List vehicles (guest-friendly)
  *     description: Public endpoint to list/ search vehicles in the fleet.
@@ -165,7 +165,7 @@ router.get("/", vehicleUnitController.listVehicles);
 
 /**
  * @swagger
- * /api/vehicles/{id}:
+ * /api/v1/vehicles/{id}:
  *   get:
  *     summary: Get a vehicle by ID
  *     tags: [Vehicles]
@@ -186,7 +186,7 @@ router.get("/:id", vehicleUnitController.getVehicleById);
 
 /**
  * @swagger
- * /api/vehicles/{id}:
+ * /api/v1/vehicles/{id}:
  *   patch:
  *     summary: Update a vehicle
  *     description: Only manager or admin can update vehicle units.
@@ -227,7 +227,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/vehicles/{id}:
+ * /api/v1/vehicles/{id}:
  *   delete:
  *     summary: Delete a vehicle
  *     description: Only manager or admin can delete vehicles.
@@ -260,7 +260,7 @@ router.delete(
 
 /**
  * @swagger
- * /api/vehicles/{id}/availability:
+ * /api/v1/vehicles/{id}/availability:
  *   patch:
  *     summary: Update vehicle availability state
  *     description: Only manager or admin can change availability_state.
@@ -308,7 +308,7 @@ router.patch(
 
 /**
  * @swagger
- * /api/vehicles/{id}/service:
+ * /api/v1/vehicles/{id}/service:
  *   patch:
  *     summary: Record a service event for a vehicle
  *     description: Only manager or admin can record services.

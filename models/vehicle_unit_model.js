@@ -22,7 +22,6 @@ const VehicleSchema = new Schema(
     plate_number: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       uppercase: true,
     },

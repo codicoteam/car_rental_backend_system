@@ -79,7 +79,6 @@ const BranchSchema = new Schema(
     code: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       uppercase: true,
     },

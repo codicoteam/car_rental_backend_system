@@ -1,5 +1,6 @@
 // services/reservations_service.js
-const Reservation = require("../models/branch_models");
+const Reservation = require("../models/reservations_model");
+const { sendEmail } = require("../utils/user_email_utils"); // <-- use your email service
 
 /**
  * Build Mongo filter from query params
@@ -60,6 +61,73 @@ function buildReservationFilter(query = {}) {
 }
 
 /**
+ * Helper: format date/time nicely
+ */
+function formatDateTime(date) {
+  if (!date) return "";
+  // Basic ISO substring, adjust as needed (e.g. timezone)
+  return new Date(date).toLocaleString();
+}
+
+/**
+ * Helper: send reservation emails to customer and creator
+ */
+async function sendReservationCreatedEmails(reservation) {
+  try {
+    const customer = reservation.user_id; // populated doc
+    const creator = reservation.created_by; // populated doc
+
+    const sameUser =
+      customer && creator && String(customer._id) === String(creator._id);
+
+    // Format dates using your existing formatDateTime function
+    const pickupAt = formatDateTime(reservation.pickup?.at);
+    const dropoffAt = formatDateTime(reservation.dropoff?.at);
+
+    // Prepare reservation data object for templates
+    const reservationData = {
+      code: reservation.code,
+      status: reservation.status,
+      pickup: {
+        branch_id: reservation.pickup?.branch_id,
+      },
+      dropoff: {
+        branch_id: reservation.dropoff?.branch_id,
+      },
+      vehicle_model_id: reservation.vehicle_model_id,
+      pricing: reservation.pricing,
+      pickupAt: pickupAt,
+      dropoffAt: dropoffAt,
+    };
+
+    // Email to customer
+    if (customer && customer.email) {
+      await emailService.sendReservationCustomerEmail({
+        to: customer.email,
+        fullName: customer.full_name || "Customer",
+        reservation: reservationData,
+      });
+    }
+
+    // Email to creator (if different from customer)
+    if (creator && creator.email && !sameUser) {
+      const customerInfo = customer
+        ? `${customer.full_name} (${customer.email})`
+        : "N/A";
+
+      await emailService.sendReservationStaffEmail({
+        to: creator.email,
+        fullName: creator.full_name || "Team Member",
+        reservation: reservationData,
+        customerInfo: customerInfo,
+      });
+    }
+  } catch (err) {
+    // Don't block reservation creation if email fails – just log it
+    console.error("Failed to send reservation created emails:", err);
+  }
+}
+/**
  * Create reservation.
  * - createdById: user who created the reservation
  * - customerUserId: the renter (user_id)
@@ -73,7 +141,20 @@ async function createReservation(createdById, customerUserId, payload) {
     };
 
     const reservation = await Reservation.create(data);
-    return reservation;
+
+    // Re-fetch with populated fields for email content
+    const populatedReservation = await Reservation.findById(reservation._id)
+      .populate("user_id", "full_name email")
+      .populate("created_by", "full_name email")
+      .populate("vehicle_id")
+      .populate("vehicle_model_id", "name")
+      .populate("pickup.branch_id")
+      .populate("dropoff.branch_id");
+
+    // Send emails (customer + creator)
+    await sendReservationCreatedEmails(populatedReservation);
+
+    return populatedReservation;
   } catch (err) {
     const error = new Error("Failed to create reservation");
     error.statusCode = 400;

@@ -15,9 +15,10 @@ function generateToken(user) {
 }
 
 /**
- * POST /api/users/register
+ * POST /api/v1/users/register
+ * Registration with OTP
  */
-async function registerUser(req, res, next) {
+async function registerUser(req, res) {
   try {
     const { full_name, email, phone, password } = req.body;
 
@@ -28,21 +29,29 @@ async function registerUser(req, res, next) {
       });
     }
 
-    const user = await userService.createUser({
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format. Please enter a valid email address.",
+      });
+    }
+
+    const user = await userService.registerUserWithEmailOtp({
       full_name,
       email,
       phone,
       password,
     });
 
-    const token = generateToken(user);
-
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
+      message: "Registration started. OTP sent to your email for verification.",
       data: {
-        user,
-        token,
+        userId: user._id,
+        email: user.email,
+        status: user.status,
       },
     });
   } catch (error) {
@@ -55,7 +64,42 @@ async function registerUser(req, res, next) {
 }
 
 /**
- * POST /api/users/login
+ * POST /api/v1/users/verify-email
+ */
+async function verifyEmail(req, res) {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "email and otp are required",
+      });
+    }
+
+    const user = await userService.verifyEmailOtp({ email, otp });
+
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: "Email verified successfully",
+      data: {
+        user,
+        token,
+      },
+    });
+  } catch (error) {
+    if (!error.statusCode) console.error(error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to verify email",
+    });
+  }
+}
+
+/**
+ * POST /api/v1/users/login
  */
 async function loginUser(req, res) {
   try {
@@ -88,13 +132,12 @@ async function loginUser(req, res) {
     if (user.status !== "active") {
       return res.status(403).json({
         success: false,
-        message: "Account is not active",
+        message: "Account is not active. Please verify your email.",
       });
     }
 
     const token = generateToken(user);
 
-    // remove password_hash before sending
     user.password_hash = undefined;
 
     res.json({
@@ -115,7 +158,7 @@ async function loginUser(req, res) {
 }
 
 /**
- * GET /api/users/me
+ * GET /api/v1/users/me
  */
 async function getProfile(req, res) {
   try {
@@ -142,7 +185,7 @@ async function getProfile(req, res) {
 }
 
 /**
- * PATCH /api/users/me
+ * PATCH /api/v1/users/me
  */
 async function updateProfile(req, res) {
   try {
@@ -170,8 +213,7 @@ async function updateProfile(req, res) {
 }
 
 /**
- * GET /api/users
- * Admin / Manager
+ * GET /api/v1/users
  */
 async function getUsers(req, res) {
   try {
@@ -198,8 +240,7 @@ async function getUsers(req, res) {
 }
 
 /**
- * GET /api/users/:id
- * Admin / Manager
+ * GET /api/v1/users/:id
  */
 async function getUserById(req, res) {
   try {
@@ -226,8 +267,7 @@ async function getUserById(req, res) {
 }
 
 /**
- * PATCH /api/users/:id
- * Admin / Manager
+ * PATCH /api/v1/users/:id
  */
 async function updateUser(req, res) {
   try {
@@ -255,8 +295,7 @@ async function updateUser(req, res) {
 }
 
 /**
- * PATCH /api/users/:id/status
- * Admin / Manager
+ * PATCH /api/v1/users/:id/status
  */
 async function updateUserStatus(req, res) {
   try {
@@ -293,8 +332,7 @@ async function updateUserStatus(req, res) {
 }
 
 /**
- * DELETE /api/users/:id
- * Admin
+ * DELETE /api/v1/users/:id
  */
 async function removeUser(req, res) {
   try {
@@ -320,8 +358,120 @@ async function removeUser(req, res) {
   }
 }
 
+/**
+ * POST /api/v1/users/me/request-delete
+ */
+async function requestDeleteAccount(req, res) {
+  try {
+    await userService.sendDeleteAccountOtp(req.user._id);
+    res.json({
+      success: true,
+      message: "OTP sent to your email to confirm account deletion",
+    });
+  } catch (error) {
+    if (!error.statusCode) console.error(error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to send delete account OTP",
+    });
+  }
+}
+
+/**
+ * POST /api/v1/users/me/confirm-delete
+ */
+async function confirmDeleteAccount(req, res) {
+  try {
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        message: "otp is required",
+      });
+    }
+
+    await userService.verifyDeleteAccountOtpAndDelete(req.user._id, otp);
+
+    res.json({
+      success: true,
+      message: "Account deleted successfully",
+    });
+  } catch (error) {
+    if (!error.statusCode) console.error(error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to delete account",
+    });
+  }
+}
+
+/**
+ * 🔥 POST /api/v1/users/forgot-password/request-otp
+ */
+async function forgotPasswordRequest(req, res) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "email is required",
+      });
+    }
+
+    await userService.requestPasswordResetOtp(email);
+
+    res.json({
+      success: true,
+      message: "If an account with that email exists, an OTP has been sent.",
+    });
+  } catch (error) {
+    // You can still hide 404 details if you want, but following your pattern:
+    if (!error.statusCode) console.error(error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to send password reset OTP",
+    });
+  }
+}
+
+/**
+ * 🔥 POST /api/v1/users/forgot-password/reset
+ */
+async function forgotPasswordReset(req, res) {
+  try {
+    const { email, otp, new_password } = req.body;
+
+    if (!email || !otp || !new_password) {
+      return res.status(400).json({
+        success: false,
+        message: "email, otp and new_password are required",
+      });
+    }
+
+    const user = await userService.resetPasswordWithOtp({
+      email,
+      otp,
+      newPassword: new_password,
+    });
+
+    res.json({
+      success: true,
+      message: "Password reset successfully. You can now log in.",
+    });
+  } catch (error) {
+    if (!error.statusCode) console.error(error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to reset password",
+    });
+  }
+}
+
 module.exports = {
   registerUser,
+  verifyEmail,
   loginUser,
   getProfile,
   updateProfile,
@@ -330,4 +480,8 @@ module.exports = {
   updateUser,
   updateUserStatus,
   removeUser,
+  requestDeleteAccount,
+  confirmDeleteAccount,
+  forgotPasswordRequest,
+  forgotPasswordReset,
 };

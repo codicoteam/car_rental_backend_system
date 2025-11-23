@@ -91,11 +91,12 @@ const requireRoles = (...allowedRoles) => {
   };
 };
 
-// Specific role middlewares (based on your enum: customer, agent, manager, admin)
+// Role middlewares (based on your enum: customer, agent, manager, admin, driver)
 const customerMiddleware = requireRoles("customer");
 const agentMiddleware = requireRoles("agent");
 const managerMiddleware = requireRoles("manager");
 const adminMiddleware = requireRoles("admin");
+const driverMiddleware = requireRoles("driver");
 
 // Customer-only (no agents) middleware
 // Use this for APIs that must not be used by agents.
@@ -136,5 +137,6 @@ module.exports = {
   agentMiddleware,
   managerMiddleware,
   adminMiddleware,
+  driverMiddleware,
   customerOnlyMiddleware,
 };

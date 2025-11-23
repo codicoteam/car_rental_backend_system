@@ -1,14 +1,19 @@
-// services/user_services.js
+// services/user_service.js
 const bcrypt = require("bcryptjs");
 const User = require("../models/user_model");
+const emailService = require("../utils/user_email_utils");
 
 const SALT_ROUNDS = 10;
 
+function generateOtp() {
+  // 6-digit OTP
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 /**
- * Create a new user (registration)
+ * Create a new user (NO OTP) — keep for admin/internal use if needed
  */
 async function createUser({ full_name, email, phone, password, roles }) {
-  // Normalize email
   const normalizedEmail = email.toLowerCase();
 
   const existingUser = await User.findOne({ email: normalizedEmail });
@@ -28,10 +33,265 @@ async function createUser({ full_name, email, phone, password, roles }) {
     email: normalizedEmail,
     phone,
     password_hash,
-    roles: roles && roles.length ? roles : undefined, // fallback to default ["customer"]
+    roles: roles && roles.length ? roles : undefined,
+    status: "active",
+    email_verified: true,
   });
 
   await user.save();
+  return user;
+}
+
+/**
+ * 🔥 Registration with email OTP
+ */
+async function registerUserWithEmailOtp({ full_name, email, phone, password }) {
+  const normalizedEmail = email.toLowerCase();
+  const existingUser = await User.findOne({ email: normalizedEmail });
+
+  if (existingUser) {
+    if (existingUser.status === "pending" && !existingUser.email_verified) {
+      const otp = generateOtp();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      existingUser.full_name = full_name;
+      existingUser.phone = phone;
+      if (password) {
+        existingUser.password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+      }
+      existingUser.email_verification_otp = otp;
+      existingUser.email_verification_expires_at = expiresAt;
+
+      await existingUser.save();
+
+      await emailService.sendVerificationEmail({
+        to: normalizedEmail,
+        fullName: full_name,
+        otp: otp,
+      });
+
+      return existingUser;
+    }
+
+    const error = new Error("Email already in use");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  let password_hash = undefined;
+  if (password) {
+    password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+  }
+
+  const otp = generateOtp();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  const user = new User({
+    full_name,
+    email: normalizedEmail,
+    phone,
+    password_hash,
+    roles: undefined,
+    status: "pending",
+    email_verified: false,
+    email_verification_otp: otp,
+    email_verification_expires_at: expiresAt,
+  });
+
+  await user.save();
+
+  await emailService.sendVerificationEmail({
+    to: normalizedEmail,
+    fullName: full_name,
+    otp: otp,
+  });
+
+  return user;
+}
+
+/**
+ * 🔥 Verify registration OTP and activate account
+ */
+async function verifyEmailOtp({ email, otp }) {
+  const normalizedEmail = email.toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (user.email_verified && user.status === "active") {
+    const error = new Error("Email already verified");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!user.email_verification_otp || !user.email_verification_expires_at) {
+    const error = new Error("No OTP found, please request a new one");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (user.email_verification_otp !== otp) {
+    const error = new Error("Invalid OTP");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (user.email_verification_expires_at < new Date()) {
+    const error = new Error("OTP has expired");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  user.email_verified = true;
+  user.status = "active";
+  user.email_verification_otp = undefined;
+  user.email_verification_expires_at = undefined;
+
+  await user.save();
+  return user;
+}
+
+/**
+ * 🔥 Send OTP for account deletion
+ */
+async function sendDeleteAccountOtp(userId) {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const otp = generateOtp();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  user.delete_account_otp = otp;
+  user.delete_account_otp_expires_at = expiresAt;
+  await user.save();
+
+  await emailService.sendDeleteAccountEmail({
+    to: user.email,
+    fullName: user.full_name,
+    otp: otp,
+  });
+
+  return true;
+}
+
+/**
+ * 🔥 Verify delete-account OTP and delete user
+ */
+async function verifyDeleteAccountOtpAndDelete(userId, otp) {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!user.delete_account_otp || !user.delete_account_otp_expires_at) {
+    const error = new Error("No OTP found, please request a new one");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (user.delete_account_otp !== otp) {
+    const error = new Error("Invalid OTP");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (user.delete_account_otp_expires_at < new Date()) {
+    const error = new Error("OTP has expired");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  user.delete_account_otp = undefined;
+  user.delete_account_otp_expires_at = undefined;
+  await user.save();
+
+  await deleteUser(userId);
+  return true;
+}
+
+/**
+ * 🔥 Forgot password – request OTP
+ */
+async function requestPasswordResetOtp(email) {
+  const normalizedEmail = email.toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const otp = generateOtp();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  user.reset_password_otp = otp;
+  user.reset_password_expires_at = expiresAt;
+  await user.save();
+
+  // You need this function in user_email_utils.js
+  await emailService.sendPasswordResetEmail({
+    to: user.email,
+    fullName: user.full_name,
+    otp: otp,
+  });
+
+  return true;
+}
+
+/**
+ * 🔥 Forgot password – verify OTP and set new password
+ */
+async function resetPasswordWithOtp({ email, otp, newPassword }) {
+  const normalizedEmail = email.toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "+password_hash"
+  );
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!user.reset_password_otp || !user.reset_password_expires_at) {
+    const error = new Error("No OTP found, please request a new one");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (user.reset_password_otp !== otp) {
+    const error = new Error("Invalid OTP");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (user.reset_password_expires_at < new Date()) {
+    const error = new Error("OTP has expired");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const password_hash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+  user.password_hash = password_hash;
+  user.reset_password_otp = undefined;
+  user.reset_password_expires_at = undefined;
+
+  await user.save();
+
   return user;
 }
 
@@ -156,6 +416,8 @@ async function deleteUser(userId) {
 
 module.exports = {
   createUser,
+  registerUserWithEmailOtp,
+  verifyEmailOtp,
   getUserByEmail,
   getUserByEmailWithPassword,
   validatePassword,
@@ -165,4 +427,8 @@ module.exports = {
   updateUserByAdmin,
   changeUserStatus,
   deleteUser,
+  sendDeleteAccountOtp,
+  verifyDeleteAccountOtpAndDelete,
+  requestPasswordResetOtp,
+  resetPasswordWithOtp,
 };

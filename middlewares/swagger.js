@@ -252,53 +252,378 @@ const options = {
               type: "string",
               example: "665a8c7be4f1c23b04d12345",
             },
+
             email: {
               type: "string",
+              required: true,
               example: "john@example.com",
             },
+
             phone: {
               type: "string",
               nullable: true,
               example: "+263771234567",
             },
+
             full_name: {
               type: "string",
+              required: true,
               example: "John Doe",
             },
+
             roles: {
               type: "array",
               items: {
                 type: "string",
-                enum: ["customer", "agent", "manager", "admin"],
+                enum: ["customer", "agent", "manager", "admin", "driver"],
               },
               example: ["customer"],
             },
+
             status: {
               type: "string",
-              enum: ["active", "suspended", "deleted"],
-              example: "active",
+              enum: ["pending", "active", "suspended", "deleted"],
+              example: "pending",
             },
+
+            email_verified: {
+              type: "boolean",
+              example: false,
+            },
+
+            email_verification_otp: {
+              type: "string",
+              description:
+                "OTP for verifying email (not returned in API responses)",
+              example: "123456",
+              writeOnly: true,
+            },
+
+            email_verification_expires_at: {
+              type: "string",
+              format: "date-time",
+              description: "Expiry time for email verification OTP",
+              example: "2025-02-10T08:15:00Z",
+              writeOnly: true,
+            },
+
+            delete_account_otp: {
+              type: "string",
+              description:
+                "OTP for deleting account (not returned in responses)",
+              example: "654321",
+              writeOnly: true,
+            },
+
+            delete_account_otp_expires_at: {
+              type: "string",
+              format: "date-time",
+              description: "Expiry time for delete-account OTP",
+              example: "2025-02-10T08:15:00Z",
+              writeOnly: true,
+            },
+
+            reset_password_otp: {
+              type: "string",
+              description:
+                "OTP for resetting password (not returned in responses)",
+              example: "789012",
+              writeOnly: true,
+            },
+
+            reset_password_expires_at: {
+              type: "string",
+              format: "date-time",
+              description: "Expiry time for reset-password OTP",
+              example: "2025-02-10T08:20:00Z",
+              writeOnly: true,
+            },
+
             auth_providers: {
               type: "array",
               items: {
                 $ref: "#/components/schemas/AuthProvider",
               },
             },
+
             created_at: {
               type: "string",
               format: "date-time",
-              example: "2023-05-15T10:00:00Z",
+              example: "2025-02-10T08:00:00Z",
+            },
+
+            updated_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-02-10T10:15:00Z",
+            },
+          },
+
+          required: ["email", "full_name", "roles", "status"],
+        },
+
+        ServiceOrder: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              description: "Service order ID",
+              example: "665a8e3d3f1a2c0012abc123",
+            },
+            vehicle_id: {
+              type: "string",
+              description: "Reference to the vehicle",
+              example: "665a8d123f1a2c0012abf999",
+            },
+            type: {
+              type: "string",
+              description: "Type of service job",
+              enum: [
+                "scheduled_service",
+                "repair",
+                "tyre_change",
+                "inspection",
+              ],
+              example: "scheduled_service",
+            },
+            status: {
+              type: "string",
+              description: "Current status of service order",
+              enum: ["open", "in_progress", "completed", "cancelled"],
+              example: "open",
+            },
+            odometer_km: {
+              type: "number",
+              description: "Odometer reading at time of service (km)",
+              example: 45321,
+            },
+            cost: {
+              type: "number",
+              description: "Total cost of the service",
+              example: 120.5,
+            },
+            notes: {
+              type: "string",
+              description: "Additional notes about the service",
+              example: "Replaced front brake pads and rotated tyres.",
+            },
+            created_by: {
+              type: "string",
+              description: "User who created the service order",
+              example: "665a8fd23f1a2c0012abf777",
+            },
+            performed_by: {
+              type: "string",
+              description: "User or vendor who performed the service",
+              example: "665a8fd23f1a2c0012abf888",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              description: "Creation timestamp",
+              example: "2025-01-15T10:23:45.000Z",
             },
             updated_at: {
               type: "string",
               format: "date-time",
-              example: "2023-05-15T10:00:00Z",
+              description: "Last update timestamp",
+              example: "2025-01-16T08:12:01.000Z",
             },
           },
-          required: ["email", "full_name", "roles", "status"],
+          required: ["vehicle_id", "type", "status"],
+        },
+        // ---------- PROFILE SUB-SCHEMAS ----------
+        IdentityDocument: {
+          type: "object",
+          properties: {
+            type: {
+              type: "string",
+              enum: ["national_id", "passport"],
+              example: "national_id",
+            },
+            imageUrl: {
+              type: "string",
+              example: "https://example.com/uploads/id-front.jpg",
+            },
+          },
         },
 
-        // ---------- PROFILE SUB-SCHEMAS ----------
+        DriverLicenseDocument: {
+          type: "object",
+          properties: {
+            number: {
+              type: "string",
+              example: "DL1234567",
+            },
+            imageUrl: {
+              type: "string",
+              example: "https://example.com/uploads/license.jpg",
+            },
+            country: {
+              type: "string",
+              example: "ZW",
+            },
+            class: {
+              type: "string",
+              example: "Class 4",
+            },
+            expires_at: {
+              type: "string",
+              format: "date-time",
+              example: "2027-12-31T23:59:59Z",
+            },
+            verified: {
+              type: "boolean",
+              example: false,
+            },
+          },
+        },
+
+        DriverProfile: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              example: "67a1234bcde567890fabcd01",
+            },
+            user_id: {
+              type: "string",
+              description: "User _id who owns this driver profile",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            display_name: {
+              type: "string",
+              example: "John D. - Harare Driver",
+            },
+            base_city: {
+              type: "string",
+              example: "Harare",
+            },
+            base_region: {
+              type: "string",
+              example: "Harare Province",
+            },
+            base_country: {
+              type: "string",
+              example: "Zimbabwe",
+            },
+            hourly_rate: {
+              type: "number",
+              example: 15,
+              description: "Price per hour in your chosen currency context",
+            },
+            bio: {
+              type: "string",
+              example: "Professional driver with 8 years experience in Harare.",
+            },
+            profile_image: {
+              type: "string",
+              example: "Professional passport photo URL",
+            },
+            years_experience: {
+              type: "number",
+              example: 8,
+            },
+            languages: {
+              type: "array",
+              items: { type: "string" },
+              example: ["English", "Shona"],
+            },
+            identity_document: {
+              $ref: "#/components/schemas/IdentityDocument",
+            },
+            driver_license: {
+              $ref: "#/components/schemas/DriverLicenseDocument",
+            },
+            status: {
+              type: "string",
+              enum: ["pending", "approved", "rejected"],
+              example: "pending",
+            },
+            approved_by_admin: {
+              type: "string",
+              nullable: true,
+              example: "665a8c7be4f1c23b04dadmin1",
+            },
+            approved_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              example: "2025-01-15T10:00:00Z",
+            },
+            rejection_reason: {
+              type: "string",
+              example: "",
+            },
+            is_available: {
+              type: "boolean",
+              example: true,
+            },
+            rating_average: {
+              type: "number",
+              example: 4.7,
+            },
+            rating_count: {
+              type: "number",
+              example: 23,
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+            },
+            updated_at: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+
+        // Input schema for creating/updating own profile (no status/approval fields)
+        DriverProfileInput: {
+          type: "object",
+          properties: {
+            display_name: {
+              type: "string",
+              example: "John D. - Harare Driver",
+            },
+            base_city: {
+              type: "string",
+              example: "Harare",
+            },
+            base_region: {
+              type: "string",
+              example: "Harare Province",
+            },
+            base_country: {
+              type: "string",
+              example: "Zimbabwe",
+            },
+            hourly_rate: {
+              type: "number",
+              example: 15,
+            },
+            bio: {
+              type: "string",
+              example: "Professional driver with 8 years experience in Harare.",
+            },
+            years_experience: {
+              type: "number",
+              example: 8,
+            },
+            languages: {
+              type: "array",
+              items: { type: "string" },
+              example: ["English", "Shona"],
+            },
+            identity_document: {
+              $ref: "#/components/schemas/IdentityDocument",
+            },
+            driver_license: {
+              $ref: "#/components/schemas/DriverLicenseDocument",
+            },
+          },
+          required: ["hourly_rate"],
+        },
 
         DriverLicense: {
           type: "object",
@@ -1145,6 +1470,1148 @@ const options = {
           },
         },
 
+        Location: {
+          type: "object",
+          properties: {
+            label: {
+              type: "string",
+              example: "Home",
+            },
+            address: {
+              type: "string",
+              example: "123 Borrowdale Road, Harare",
+            },
+            latitude: {
+              type: "number",
+              example: -17.8292,
+            },
+            longitude: {
+              type: "number",
+              example: 31.053,
+            },
+          },
+        },
+
+        DriverPricingSnapshot: {
+          type: "object",
+          properties: {
+            currency: {
+              type: "string",
+              enum: ["USD", "ZWL"],
+              example: "USD",
+            },
+            hourly_rate_snapshot: {
+              type: "number",
+              example: 15,
+            },
+            hours_requested: {
+              type: "number",
+              example: 3,
+            },
+            estimated_total_amount: {
+              type: "number",
+              example: 45,
+            },
+          },
+        },
+
+        DriverBooking: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              example: "67a12b3c4d5e6f7890abcd01",
+            },
+            code: {
+              type: "string",
+              example: "DRV-20251120-123456",
+            },
+            customer_id: {
+              type: "string",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            created_by: {
+              type: "string",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            created_channel: {
+              type: "string",
+              enum: ["web", "mobile", "agent", "other"],
+              example: "web",
+            },
+            driver_profile_id: {
+              type: "string",
+              example: "67a1driverprofileid",
+            },
+            driver_user_id: {
+              type: "string",
+              example: "665a8c7be4f1c23b04d99999",
+            },
+            start_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-21T09:00:00Z",
+            },
+            end_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-21T12:00:00Z",
+            },
+            pickup_location: {
+              $ref: "#/components/schemas/Location",
+            },
+            dropoff_location: {
+              $ref: "#/components/schemas/Location",
+            },
+            notes: {
+              type: "string",
+              example: "Airport pickup, 3 hours, 2 passengers.",
+            },
+            pricing: {
+              $ref: "#/components/schemas/DriverPricingSnapshot",
+            },
+            status: {
+              type: "string",
+              enum: [
+                "requested",
+                "accepted_by_driver",
+                "declined_by_driver",
+                "awaiting_payment",
+                "confirmed",
+                "cancelled_by_customer",
+                "cancelled_by_driver",
+                "expired",
+                "completed",
+              ],
+              example: "requested",
+            },
+            requested_at: {
+              type: "string",
+              format: "date-time",
+            },
+            driver_responded_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            payment_deadline_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            paid_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            cancelled_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            completed_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            payment_id: {
+              type: "string",
+              nullable: true,
+            },
+            payment_status_snapshot: {
+              type: "string",
+              enum: ["unpaid", "pending", "paid", "failed", "refunded", "void"],
+              example: "unpaid",
+            },
+            last_status_update_by: {
+              type: "string",
+              nullable: true,
+            },
+            customer_rating_of_driver: {
+              type: "number",
+              nullable: true,
+              example: 5,
+            },
+            customer_review_text: {
+              type: "string",
+              example: "Great driver, very professional!",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+            },
+            updated_at: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+
+        DriverBookingCreateRequest: {
+          type: "object",
+          properties: {
+            customer_id: {
+              type: "string",
+              description:
+                "Optional. Only used by agent/manager/admin to create on behalf of a customer.",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            driver_profile_id: {
+              type: "string",
+              example: "67a1driverprofileid",
+            },
+            start_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-21T09:00:00Z",
+            },
+            end_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            pickup_location: {
+              $ref: "#/components/schemas/Location",
+            },
+            dropoff_location: {
+              $ref: "#/components/schemas/Location",
+            },
+            notes: {
+              type: "string",
+              example: "Need pickup from airport, 3 hours total.",
+            },
+            pricing: {
+              type: "object",
+              properties: {
+                currency: {
+                  type: "string",
+                  enum: ["USD", "ZWL"],
+                  example: "USD",
+                },
+                hours_requested: {
+                  type: "number",
+                  example: 3,
+                },
+              },
+            },
+          },
+          required: [
+            "driver_profile_id",
+            "start_at",
+            "pickup_location",
+            "dropoff_location",
+            "pricing",
+          ],
+        },
+
+        DriverBookingPaymentAttach: {
+          type: "object",
+          properties: {
+            payment_id: {
+              type: "string",
+              example: "67a1paymentid",
+            },
+            payment_status: {
+              type: "string",
+              enum: ["paid", "pending", "failed"],
+              example: "paid",
+            },
+          },
+          required: ["payment_id"],
+        },
+
+        Location: {
+          type: "object",
+          properties: {
+            label: {
+              type: "string",
+              example: "Home",
+            },
+            address: {
+              type: "string",
+              example: "123 Borrowdale Road, Harare",
+            },
+            latitude: {
+              type: "number",
+              example: -17.8292,
+            },
+            longitude: {
+              type: "number",
+              example: 31.053,
+            },
+          },
+        },
+
+        DriverPricingSnapshot: {
+          type: "object",
+          properties: {
+            currency: {
+              type: "string",
+              enum: ["USD", "ZWL"],
+              example: "USD",
+            },
+            hourly_rate_snapshot: {
+              type: "number",
+              example: 15,
+            },
+            hours_requested: {
+              type: "number",
+              example: 3,
+            },
+            estimated_total_amount: {
+              type: "number",
+              example: 45,
+            },
+          },
+        },
+
+        DriverBooking: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              example: "67a12b3c4d5e6f7890abcd01",
+            },
+            code: {
+              type: "string",
+              example: "DRV-20251120-123456",
+            },
+            customer_id: {
+              type: "string",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            created_by: {
+              type: "string",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            created_channel: {
+              type: "string",
+              enum: ["web", "mobile", "agent", "other"],
+              example: "web",
+            },
+            driver_profile_id: {
+              type: "string",
+              example: "67a1driverprofileid",
+            },
+            driver_user_id: {
+              type: "string",
+              example: "665a8c7be4f1c23b04d99999",
+            },
+            start_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-21T09:00:00Z",
+            },
+            end_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-21T12:00:00Z",
+            },
+            pickup_location: {
+              $ref: "#/components/schemas/Location",
+            },
+            dropoff_location: {
+              $ref: "#/components/schemas/Location",
+            },
+            notes: {
+              type: "string",
+              example: "Airport pickup, 3 hours, 2 passengers.",
+            },
+            pricing: {
+              $ref: "#/components/schemas/DriverPricingSnapshot",
+            },
+            status: {
+              type: "string",
+              enum: [
+                "requested",
+                "accepted_by_driver",
+                "declined_by_driver",
+                "awaiting_payment",
+                "confirmed",
+                "cancelled_by_customer",
+                "cancelled_by_driver",
+                "expired",
+                "completed",
+              ],
+              example: "requested",
+            },
+            requested_at: {
+              type: "string",
+              format: "date-time",
+            },
+            driver_responded_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            payment_deadline_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            paid_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            cancelled_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            completed_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            payment_id: {
+              type: "string",
+              nullable: true,
+            },
+            payment_status_snapshot: {
+              type: "string",
+              enum: ["unpaid", "pending", "paid", "failed", "refunded", "void"],
+              example: "unpaid",
+            },
+            last_status_update_by: {
+              type: "string",
+              nullable: true,
+            },
+            customer_rating_of_driver: {
+              type: "number",
+              nullable: true,
+              example: 5,
+            },
+            customer_review_text: {
+              type: "string",
+              example: "Great driver, very professional!",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+            },
+            updated_at: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+
+        DriverBookingCreateRequest: {
+          type: "object",
+          properties: {
+            customer_id: {
+              type: "string",
+              description:
+                "Optional. Only used by agent/manager/admin to create on behalf of a customer.",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            driver_profile_id: {
+              type: "string",
+              example: "67a1driverprofileid",
+            },
+            start_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-21T09:00:00Z",
+            },
+            end_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            pickup_location: {
+              $ref: "#/components/schemas/Location",
+            },
+            dropoff_location: {
+              $ref: "#/components/schemas/Location",
+            },
+            notes: {
+              type: "string",
+              example: "Need pickup from airport, 3 hours total.",
+            },
+            pricing: {
+              type: "object",
+              properties: {
+                currency: {
+                  type: "string",
+                  enum: ["USD", "ZWL"],
+                  example: "USD",
+                },
+                hours_requested: {
+                  type: "number",
+                  example: 3,
+                },
+              },
+            },
+          },
+          required: [
+            "driver_profile_id",
+            "start_at",
+            "pickup_location",
+            "dropoff_location",
+            "pricing",
+          ],
+        },
+
+        DriverBookingPaymentAttach: {
+          type: "object",
+          properties: {
+            payment_id: {
+              type: "string",
+              example: "67a1paymentid",
+            },
+            payment_status: {
+              type: "string",
+              enum: ["paid", "pending", "failed"],
+              example: "paid",
+            },
+          },
+          required: ["payment_id"],
+        },
+        ServiceSchedule: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              description: "Service schedule ID",
+              example: "665a8e3d3f1a2c0012abc123",
+            },
+            vehicle_id: {
+              type: "string",
+              nullable: true,
+              description:
+                "Specific vehicle this schedule applies to (optional)",
+              example: "665a8d123f1a2c0012abf999",
+            },
+            vehicle_model_id: {
+              type: "string",
+              nullable: true,
+              description: "Vehicle model this schedule applies to (optional)",
+              example: "665a8d123f1a2c0012abf111",
+            },
+            interval_km: {
+              type: "number",
+              nullable: true,
+              description: "Service interval in kilometers",
+              example: 10000,
+            },
+            interval_days: {
+              type: "number",
+              nullable: true,
+              description: "Service interval in days",
+              example: 180,
+            },
+            next_due_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              description: "Next due date for this schedule",
+              example: "2025-06-01T00:00:00.000Z",
+            },
+            next_due_odo: {
+              type: "number",
+              nullable: true,
+              description: "Next due odometer value (km)",
+              example: 45000,
+            },
+            notes: {
+              type: "string",
+              nullable: true,
+              description: "Additional information about the schedule",
+              example: "Standard 10k km service schedule.",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              description: "Creation timestamp",
+              example: "2025-01-15T10:23:45.000Z",
+            },
+            updated_at: {
+              type: "string",
+              format: "date-time",
+              description: "Last update timestamp",
+              example: "2025-01-20T09:12:00.000Z",
+            },
+          },
+          // At least one of vehicle_id or vehicle_model_id must be set in your logic,
+          // but Swagger can't express that exactly; we just mark both as optional here.
+        },
+        // In swagger.js, inside components.schemas: { ... }
+
+        ChatAttachment: {
+          type: "object",
+          properties: {
+            type: {
+              type: "string",
+              enum: ["image", "file"],
+              example: "image",
+            },
+            url: {
+              type: "string",
+              description: "Public URL to the uploaded file/image",
+              example: "https://cdn.example.com/uploads/chat/abc123.jpg",
+            },
+            filename: {
+              type: "string",
+              example: "receipt.jpg",
+            },
+          },
+        },
+
+        ChatMessage: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              example: "67a12b3c4d5e6f7890abcd01",
+            },
+            conversation_id: {
+              type: "string",
+              description: "Reference to ChatConversation._id",
+              example: "67a12b3c4d5e6f7890conv01",
+            },
+            sender_id: {
+              type: "string",
+              description: "User who sent the message (User._id)",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            content: {
+              type: "string",
+              description:
+                "Text content of the message (can be empty if only attachments)",
+              example: "Hi, when can I pick up the vehicle?",
+            },
+            attachments: {
+              type: "array",
+              items: {
+                $ref: "#/components/schemas/ChatAttachment",
+              },
+            },
+            message_type: {
+              type: "string",
+              enum: ["user", "system"],
+              example: "user",
+            },
+            read_by: {
+              type: "array",
+              description: "User IDs that have read this message",
+              items: {
+                type: "string",
+                example: "665a8c7be4f1c23b04d12345",
+              },
+            },
+            is_deleted: {
+              type: "boolean",
+              example: false,
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-22T10:15:00Z",
+            },
+            updated_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-22T10:15:10Z",
+            },
+          },
+        },
+
+        ChatMessageCreateRequest: {
+          type: "object",
+          properties: {
+            conversation_id: {
+              type: "string",
+              description: "Target conversation ID",
+              example: "67a12b3c4d5e6f7890conv01",
+            },
+            content: {
+              type: "string",
+              description:
+                "Text of the message. Can be empty if you only send attachments.",
+              example: "Hello, I have a question about my booking.",
+            },
+            attachments: {
+              type: "array",
+              description: "Optional list of attachments (images/files)",
+              items: {
+                $ref: "#/components/schemas/ChatAttachment",
+              },
+            },
+          },
+          required: ["conversation_id"],
+        },
+
+        ChatParticipant: {
+          type: "object",
+          properties: {
+            user_id: {
+              type: "string",
+              description: "User._id of the participant",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            role_at_time: {
+              type: "string",
+              enum: ["customer", "agent", "manager", "admin", "driver"],
+              example: "agent",
+            },
+            joined_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-22T09:00:00Z",
+            },
+          },
+        },
+
+        ChatConversation: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              example: "67a12b3c4d5e6f7890conv01",
+            },
+            title: {
+              type: "string",
+              description:
+                "Optional title, used mainly for group/support chats",
+              example: "Support - Reservation HRE-2025-000123",
+            },
+            participants: {
+              type: "array",
+              description: "List of participants in the conversation",
+              items: {
+                $ref: "#/components/schemas/ChatParticipant",
+              },
+            },
+            type: {
+              type: "string",
+              enum: ["direct", "group"],
+              example: "direct",
+            },
+            context_type: {
+              type: "string",
+              enum: [
+                "general",
+                "reservation",
+                "driver_booking",
+                "support",
+                "other",
+              ],
+              example: "reservation",
+            },
+            context_id: {
+              type: "string",
+              nullable: true,
+              description: "Optional ID of linked entity, e.g. Reservation._id",
+              example: "67a12b3c4d5e6f7890res123",
+            },
+            created_by: {
+              type: "string",
+              description: "User who created this conversation",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            last_message_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              example: "2025-11-22T10:15:00Z",
+            },
+            last_message_preview: {
+              type: "string",
+              example: "Sure, you can collect it at 9AM.",
+            },
+            is_archived: {
+              type: "boolean",
+              example: false,
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-22T09:00:00Z",
+            },
+            updated_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-22T10:15:00Z",
+            },
+          },
+        },
+
+        ChatConversationCreateRequest: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              description: "Optional title for group/support conversations",
+              example: "Support - Damaged Tyre",
+            },
+            participant_ids: {
+              type: "array",
+              description:
+                "User IDs that should participate in this conversation (including the current user if you want)",
+              items: {
+                type: "string",
+                example: "665a8c7be4f1c23b04d12345",
+              },
+            },
+            type: {
+              type: "string",
+              enum: ["direct", "group"],
+              example: "direct",
+            },
+            context_type: {
+              type: "string",
+              enum: [
+                "general",
+                "reservation",
+                "driver_booking",
+                "support",
+                "other",
+              ],
+              example: "reservation",
+            },
+            context_id: {
+              type: "string",
+              nullable: true,
+              example: "67a12b3c4d5e6f7890res123",
+            },
+          },
+          required: ["participant_ids"],
+        },
+
+        VehicleTrackerCreateRequest: {
+          type: "object",
+          properties: {
+            device_id: {
+              type: "string",
+              example: "TRACKER-001",
+            },
+            label: {
+              type: "string",
+              example: "HRE Tracker Corolla 1",
+            },
+            notes: {
+              type: "string",
+              example: "Installed 2025-11-20 by Prince.",
+            },
+          },
+          required: ["device_id"],
+        },
+
+        VehicleTrackerAttachRequest: {
+          type: "object",
+          properties: {
+            vehicle_id: {
+              type: "string",
+              example: "674ad9f1e2b3c4d5e6f78901",
+            },
+          },
+          required: ["vehicle_id"],
+        },
+
+        VehicleTrackerDeviceLoginRequest: {
+          type: "object",
+          properties: {
+            device_id: {
+              type: "string",
+              example: "TRACKER-001",
+            },
+            api_key: {
+              type: "string",
+              example: "secret-or-pin",
+            },
+          },
+          required: ["device_id", "api_key"],
+        },
+
+        VehicleLocationResponse: {
+          type: "object",
+          properties: {
+            vehicle_id: {
+              type: "string",
+              example: "674ad9f1e2b3c4d5e6f78901",
+            },
+            tracker_id: {
+              type: "string",
+              nullable: true,
+              example: "67a1234b5c6d7e8f90123456",
+            },
+            last_location: {
+              $ref: "#/components/schemas/VehicleLocationSnapshot",
+            },
+            updated_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-23T12:01:05Z",
+            },
+          },
+        },
+
+        VehicleTracker: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              example: "67a1234b5c6d7e8f90123456",
+            },
+            device_id: {
+              type: "string",
+              example: "TRACKER-001",
+            },
+            label: {
+              type: "string",
+              example: "HRE Tracker Corolla 1",
+            },
+            vehicle_id: {
+              type: "string",
+              nullable: true,
+              example: "674ad9f1e2b3c4d5e6f78901",
+            },
+            branch_id: {
+              type: "string",
+              nullable: true,
+              example: "6730b1c2d3e4f5a6b7c89012",
+            },
+            status: {
+              type: "string",
+              enum: ["inactive", "active", "maintenance"],
+              example: "active",
+            },
+            last_seen_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              example: "2025-11-23T12:01:05Z",
+            },
+            last_seen_ip: {
+              type: "string",
+              example: "197.221.10.45",
+            },
+            last_seen_user_agent: {
+              type: "string",
+              example: "Android Tracker App/1.0.0",
+            },
+            last_location: {
+              $ref: "#/components/schemas/VehicleLocationSnapshot",
+            },
+            settings: {
+              type: "object",
+              properties: {
+                reporting_interval_sec: {
+                  type: "integer",
+                  example: 15,
+                },
+                allow_background_tracking: {
+                  type: "boolean",
+                  example: true,
+                },
+              },
+            },
+            created_by: {
+              type: "string",
+              nullable: true,
+              example: "665a8c7be4f1c23b04d12345",
+            },
+            attached_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              example: "2025-11-23T11:55:00Z",
+            },
+            detached_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+            detach_reason: {
+              type: "string",
+              example: "Vehicle in workshop",
+            },
+            notes: {
+              type: "string",
+              example: "Installed under dashboard.",
+            },
+            created_at: {
+              type: "string",
+              format: "date-time",
+            },
+            updated_at: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
+
+        VehicleLocationSnapshot: {
+          type: "object",
+          properties: {
+            latitude: {
+              type: "number",
+              example: -17.8292,
+            },
+            longitude: {
+              type: "number",
+              example: 31.053,
+            },
+            speed_kmh: {
+              type: "number",
+              example: 48.5,
+            },
+            heading_deg: {
+              type: "number",
+              example: 120,
+            },
+            accuracy_m: {
+              type: "number",
+              example: 5,
+            },
+            at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-11-23T12:01:00Z",
+            },
+            source: {
+              type: "string",
+              enum: ["gps", "network", "mixed", "unknown"],
+              example: "gps",
+            },
+          },
+        },
+
+        VehicleIncident: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              description: "Vehicle incident ID",
+              example: "67b0f8cbd1e0d201a4e88c91",
+            },
+
+            vehicle_id: {
+              type: "string",
+              description: "ID of the vehicle involved in the incident",
+              example: "67b0f7bcd1e0d201a4e88b22",
+            },
+
+            reservation_id: {
+              type: "string",
+              nullable: true,
+              description:
+                "Reservation during which the incident occurred (optional)",
+              example: "67b0f7f4d1e0d201a4e88b70",
+            },
+
+            reported_by: {
+              type: "string",
+              description: "User who reported the incident",
+              example: "67a4d90d8f2e7b00128b0fa3",
+            },
+
+            branch_id: {
+              type: "string",
+              nullable: true,
+              description: "Branch that logged the incident",
+              example: "67a45098c9f71f0021b43c44",
+            },
+
+            type: {
+              type: "string",
+              enum: [
+                "accident",
+                "scratch",
+                "tyre",
+                "windshield",
+                "mechanical_issue",
+                "other",
+              ],
+              description: "Type of damage or incident",
+              example: "accident",
+            },
+
+            severity: {
+              type: "string",
+              enum: ["minor", "major"],
+              description: "Incident severity",
+              example: "minor",
+            },
+
+            photos: {
+              type: "array",
+              description: "List of photo URLs documenting the damage",
+              items: { type: "string" },
+              example: [
+                "https://cdn.example.com/incidents/123/photo1.jpg",
+                "https://cdn.example.com/incidents/123/photo2.jpg",
+              ],
+            },
+
+            description: {
+              type: "string",
+              description: "Description of the incident",
+              example: "Front bumper cracked and left fog-light damaged.",
+            },
+
+            occurred_at: {
+              type: "string",
+              format: "date-time",
+              description: "Date and time when the incident occurred",
+              example: "2025-01-12T14:05:00.000Z",
+            },
+
+            estimated_cost: {
+              type: "number",
+              nullable: true,
+              description: "Estimated financial cost of the damage",
+              example: 350.75,
+            },
+
+            final_cost: {
+              type: "number",
+              nullable: true,
+              description: "Final confirmed repair cost",
+              example: 310.0,
+            },
+
+            status: {
+              type: "string",
+              enum: ["open", "under_review", "resolved", "written_off"],
+              description: "Incident case status",
+              example: "open",
+            },
+
+            chargeable_to_customer_amount: {
+              type: "number",
+              nullable: true,
+              description:
+                "Amount billed to customer for the damage (optional)",
+              example: 150.0,
+            },
+
+            payment_id: {
+              type: "string",
+              nullable: true,
+              description: "Payment record associated with the damage charge",
+              example: "67b0f9cbd1e0d201a4e88fa2",
+            },
+
+            created_at: {
+              type: "string",
+              format: "date-time",
+              description: "Record creation timestamp",
+              example: "2025-01-12T16:23:44.000Z",
+            },
+
+            updated_at: {
+              type: "string",
+              format: "date-time",
+              description: "Last update timestamp",
+              example: "2025-01-12T17:10:02.000Z",
+            },
+          },
+
+          required: ["vehicle_id", "reported_by", "type", "severity"],
+        },
         PromoCode: {
           type: "object",
           properties: {
@@ -1282,6 +2749,15 @@ const options = {
         description: "Pricing rate plans for vehicles/branches",
       },
       { name: "PromoCodes", description: "Promo / discount codes" },
+      {
+        name: "DriverProfiles",
+        description: "Driver registration, approval and public listing",
+      },
+      {
+        name: "DriverBookings",
+        description:
+          "Standalone driver booking flows (customer selects a driver and pays after driver accepts).",
+      },
     ],
   },
   apis: [
@@ -1293,6 +2769,13 @@ const options = {
     "./routers/rate_plan_router.js",
     "./routers/branch_router.js",
     "./routers/promo_code_router.js",
+    "./routers/driver_profile_router.js",
+    "./routers/driver_booking_router.js",
+    "./routers/service_order_router.js",
+    "./routers/service_schedule_router.js",
+    "./routers/vehicle_incident_router.js",
+    "./routers/chat_router.js",
+    "./routers/vehicle_tracker_router.js",
   ],
 };
 
