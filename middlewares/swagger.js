@@ -12,7 +12,7 @@ const options = {
     },
     servers: [
       {
-        url: "http://13.61.185.238:5050/",
+        url: "http://13.61.185.238:5050",
         description: "AWS SERVER",
       },
       {
