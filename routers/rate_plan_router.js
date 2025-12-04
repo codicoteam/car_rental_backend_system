@@ -8,8 +8,7 @@ const {
   requireRoles,
 } = require("../middlewares/auth_middleware");
 
-const managerOrAdmin = requireRoles("manager", "admin", "customer", "agent", "driver");
-const adminOnly = requireRoles("admin");
+
 
 /**
  * @swagger
@@ -146,7 +145,6 @@ const adminOnly = requireRoles("admin");
 router.post(
   "/",
   authMiddleware,
-  managerOrAdmin,
   ratePlanController.createRatePlan
 );
 
@@ -211,7 +209,6 @@ router.post(
 router.get(
   "/",
   authMiddleware,
-  managerOrAdmin,
   ratePlanController.listRatePlans
 );
 
@@ -239,7 +236,6 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
-  managerOrAdmin,
   ratePlanController.getRatePlanById
 );
 
@@ -278,7 +274,6 @@ router.get(
 router.patch(
   "/:id",
   authMiddleware,
-  managerOrAdmin,
   ratePlanController.updateRatePlan
 );
 
@@ -310,7 +305,6 @@ router.patch(
 router.delete(
   "/:id",
   authMiddleware,
-  adminOnly,
   ratePlanController.deleteRatePlan
 );
 
