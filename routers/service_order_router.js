@@ -81,7 +81,7 @@ const {
 
 // Create (Admin + Manager only)
 router.post(
-  "/service-orders",
+  "/",
   authMiddleware,
   requireRoles("admin", "manager"),
   serviceOrderController.createServiceOrder
@@ -89,7 +89,7 @@ router.post(
 
 // List (all authenticated users can read)
 router.get(
-  "/service-orders",
+  "/",
   authMiddleware,
   serviceOrderController.getServiceOrders
 );

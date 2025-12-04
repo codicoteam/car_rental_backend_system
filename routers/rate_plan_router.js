@@ -8,7 +8,7 @@ const {
   requireRoles,
 } = require("../middlewares/auth_middleware");
 
-const managerOrAdmin = requireRoles("manager", "admin");
+const managerOrAdmin = requireRoles("manager", "admin", "customer", "agent", "driver");
 const adminOnly = requireRoles("admin");
 
 /**

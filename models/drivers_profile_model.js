@@ -3,11 +3,10 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const ObjectId = Schema.Types.ObjectId;
 
-// Reuse a simple driver license sub-schema (similar to your other models)
 const DriverLicenseSchema = new Schema(
   {
     number: { type: String, trim: true },
-    imageUrl: { type: String, trim: true }, // <-- image for driver's licence
+    imageUrl: { type: String, trim: true },
     country: { type: String, trim: true },
     class: { type: String, trim: true },
     expires_at: { type: Date },
@@ -15,8 +14,6 @@ const DriverLicenseSchema = new Schema(
   },
   { _id: false }
 );
-
-// NEW: identity document (national ID or passport) with image
 const IdentityDocumentSchema = new Schema(
   {
     type: {

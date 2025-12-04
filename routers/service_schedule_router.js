@@ -129,15 +129,15 @@ const {
 
 // Create (admin + manager)
 router.post(
-  "/service-schedules",
+  "/",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "customer", "agent", "driver"),
   serviceScheduleController.createServiceSchedule
 );
 
 // List (all auth users read-only)
 router.get(
-  "/service-schedules",
+  "/",
   authMiddleware,
   serviceScheduleController.getServiceSchedules
 );
