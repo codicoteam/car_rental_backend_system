@@ -6,6 +6,8 @@ const ratePlanController = require("../controllers/rate_plan_controller");
 const {
   authMiddleware,
   requireRoles,
+  customerMiddleware,
+  agentMiddleware,
 } = require("../middlewares/auth_middleware");
 
 
@@ -208,7 +210,7 @@ router.post(
  */
 router.get(
   "/",
-  authMiddleware,
+  authMiddleware, 
   ratePlanController.listRatePlans
 );
 
@@ -235,7 +237,7 @@ router.get(
  */
 router.get(
   "/:id",
-  authMiddleware,
+  authMiddleware, customerMiddleware, agentMiddleware,
   ratePlanController.getRatePlanById
 );
 
@@ -273,7 +275,7 @@ router.get(
  */
 router.patch(
   "/:id",
-  authMiddleware,
+  authMiddleware, customerMiddleware, agentMiddleware,
   ratePlanController.updateRatePlan
 );
 
@@ -304,7 +306,7 @@ router.patch(
  */
 router.delete(
   "/:id",
-  authMiddleware,
+  authMiddleware, customerMiddleware, agentMiddleware,
   ratePlanController.deleteRatePlan
 );
 
@@ -343,7 +345,7 @@ router.delete(
  */
 router.get(
   "/by-vehicle/:vehicleId",
-  authMiddleware,
+  authMiddleware, customerMiddleware, agentMiddleware,
   ratePlanController.getRatePlansByVehicle
 );
 
@@ -382,7 +384,7 @@ router.get(
  */
 router.get(
   "/by-model/:vehicleModelId",
-  authMiddleware,
+  authMiddleware, customerMiddleware, agentMiddleware,
   ratePlanController.getRatePlansByModel
 );
 
@@ -422,7 +424,7 @@ router.get(
  */
 router.get(
   "/by-class/:vehicleClass",
-  authMiddleware,
+  authMiddleware, customerMiddleware, agentMiddleware,
   ratePlanController.getRatePlansByClass
 );
 

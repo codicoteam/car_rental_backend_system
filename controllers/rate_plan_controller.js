@@ -53,13 +53,13 @@ async function listRatePlans(req, res) {
     const { user } = req;
 
     // you might want to restrict listing to staff only
-    if (!isPricingStaff(user)) {
-      return res.status(403).json({
-        success: false,
-        code: "RATE_PLAN_FORBIDDEN",
-        message: "Only manager/admin can list rate plans",
-      });
-    }
+    // if (!isPricingStaff(user)) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     code: "RATE_PLAN_FORBIDDEN",
+    //     message: "Only manager/admin can list rate plans",
+    //   });
+    // }
 
     const result = await ratePlanService.listRatePlans(req.query);
 
