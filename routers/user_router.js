@@ -5,11 +5,9 @@ const router = express.Router();
 const userController = require("../controllers/user_controller");
 const {
   authMiddleware,
-  requireRoles,
 } = require("../middlewares/auth_middleware");
 
 // role helpers
-const managerOrAdmin = requireRoles("manager", "admin");
 
 /**
  * @swagger
@@ -269,7 +267,7 @@ router.post(
  * @swagger
  * /api/v1/users:
  *   get:
- *     summary: List users (Admin/Manager only)
+ *     summary: List users (All)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -302,7 +300,7 @@ router.post(
  *       403:
  *         description: Forbidden
  */
-router.get("/", authMiddleware, managerOrAdmin, userController.getUsers);
+router.get("/", authMiddleware, userController.getUsers);
 
 // 🔥 FORGOT PASSWORD – REQUEST OTP
 /**
@@ -408,7 +406,7 @@ router.post("/forgot-password/reset", userController.forgotPasswordReset);
  *       200:
  *         description: List of users
  */
-router.get("/", authMiddleware, managerOrAdmin, userController.getUsers);
+router.get("/", authMiddleware, userController.getUsers);
 
 /**
  * @swagger
@@ -435,7 +433,7 @@ router.get("/", authMiddleware, managerOrAdmin, userController.getUsers);
  *       403:
  *         description: Forbidden
  */
-router.get("/:id", authMiddleware, managerOrAdmin, userController.getUserById);
+router.get("/:id", authMiddleware, userController.getUserById);
 
 /**
  * @swagger
@@ -480,7 +478,7 @@ router.get("/:id", authMiddleware, managerOrAdmin, userController.getUserById);
  *       403:
  *         description: Forbidden
  */
-router.patch("/:id", authMiddleware, managerOrAdmin, userController.updateUser);
+router.patch("/:id", authMiddleware, userController.updateUser);
 
 /**
  * @swagger
@@ -523,7 +521,6 @@ router.patch("/:id", authMiddleware, managerOrAdmin, userController.updateUser);
 router.patch(
   "/:id/status",
   authMiddleware,
-  managerOrAdmin,
   userController.updateUserStatus
 );
 
@@ -555,7 +552,6 @@ router.patch(
 router.delete(
   "/:id",
   authMiddleware,
-  requireRoles("admin"),
   userController.removeUser
 );
 
