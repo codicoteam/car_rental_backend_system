@@ -185,6 +185,171 @@ const options = {
           },
         },
 
+        Payment: {
+          type: "object",
+          description:
+            "Payment record. Must reference either reservation_id or driver_booking_id.",
+          properties: {
+            _id: {
+              type: "string",
+              example: "6750f1e0c1a2b34de0pay001",
+            },
+
+            reservation_id: {
+              type: "string",
+              nullable: true,
+              description: "Reservation ObjectId",
+              example: "6750f1e0c1a2b34de0res001",
+            },
+
+            driver_booking_id: {
+              type: "string",
+              nullable: true,
+              description: "DriverBooking ObjectId",
+              example: "6750f1e0c1a2b34de0drv001",
+            },
+
+            user_id: {
+              type: "string",
+              description: "User ObjectId",
+              example: "665a8c7be4f1c23b04d12345",
+            },
+
+            provider: {
+              type: "string",
+              enum: ["stripe", "paynow", "ecocash", "bank_transfer", "cash"],
+              example: "paynow",
+            },
+
+            method: {
+              type: "string",
+              enum: ["card", "wallet", "bank", "cash"],
+              example: "wallet",
+            },
+
+            amount: {
+              type: "string",
+              description: "Decimal128 value stored as string",
+              example: "150.00",
+            },
+
+            currency: {
+              type: "string",
+              enum: ["USD", "ZWL"],
+              example: "USD",
+            },
+
+            paymentStatus: {
+              type: "string",
+              enum: [
+                "paid",
+                "pending",
+                "failed",
+                "unpaid",
+                "cancelled",
+                "sent",
+                "awaiting_delivery",
+                "awaiting_confirmation",
+              ],
+              example: "pending",
+            },
+
+            pollUrl: {
+              type: "string",
+              example: "not available",
+            },
+
+            pricePaid: {
+              type: "number",
+              example: 150,
+            },
+
+            promotionApplied: {
+              type: "boolean",
+              example: false,
+            },
+
+            promotionDiscount: {
+              type: "number",
+              example: 0,
+            },
+
+            boughtAt: {
+              type: "string",
+              format: "date-time",
+              example: "2025-01-01T09:45:00Z",
+            },
+
+            provider_ref: {
+              type: "string",
+              nullable: true,
+              example: "PNW-REF-839203",
+            },
+
+            captured_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              example: "2025-01-01T09:46:30Z",
+            },
+
+            paynow_invoice_id: {
+              type: "string",
+              nullable: true,
+              example: "PNW-INV-20250101-0001",
+            },
+
+            refunds: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  amount: {
+                    type: "string",
+                    description: "Decimal128 refund amount",
+                    example: "50.00",
+                  },
+                  provider_ref: {
+                    type: "string",
+                    example: "PNW-REFUND-001",
+                  },
+                  at: {
+                    type: "string",
+                    format: "date-time",
+                    example: "2025-01-02T10:00:00Z",
+                  },
+                },
+              },
+            },
+
+            promo_code_id: {
+              type: "string",
+              nullable: true,
+              description: "PromoCode ObjectId",
+              example: "6750f1e0c1a2b34de0promo01",
+            },
+
+            promo_code: {
+              type: "string",
+              nullable: true,
+              description: "Snapshot promo code text",
+              example: "WELCOME10",
+            },
+
+            created_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-01-01T09:40:00Z",
+            },
+
+            updated_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-01-01T09:46:45Z",
+            },
+          },
+        },
+
         Reservation: {
           type: "object",
           properties: {
@@ -2749,6 +2914,11 @@ const options = {
         description: "Car rental reservations / bookings",
       },
       {
+  name: "Payments",
+  description: "Payment transactions for reservations and driver bookings",
+},
+
+      {
         name: "RatePlans",
         description: "Pricing rate plans for vehicles/branches",
       },
@@ -2780,6 +2950,7 @@ const options = {
     "./routers/vehicle_incident_router.js",
     "./routers/chat_router.js",
     "./routers/vehicle_tracker_router.js",
+    "./routers/payment_router.js",  
   ],
 };
 

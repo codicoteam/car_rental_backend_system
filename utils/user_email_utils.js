@@ -21,60 +21,102 @@ function generateEmailTemplate({ title, message, otpCode = null }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #ffffff;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
           
-          <!-- Header with Logo -->
+          <!-- Official Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%); padding: 30px 40px; text-align: center;">
-              <img src="https://aamokxxnfpmdpayvmngs.supabase.co/storage/v1/object/public/medicineimages/MR3.png" alt="MoRental Logo" style="max-width: 180px; height: auto;">
+            <td style="background-color: #1a365d; padding: 30px 40px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">MAvHU PROJECT</h1>
+              <p style="color: #cbd5e0; margin: 10px 0 0 0; font-size: 14px;">Health & Medical Research Initiative</p>
             </td>
           </tr>
           
-          <!-- Content -->
+          <!-- Content Area -->
           <tr>
-            <td style="padding: 40px;">
-              <h2 style="color: #1e3a8a; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">${title}</h2>
+            <td style="padding: 40px 40px 30px 40px;">
               
-              <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+              <!-- Title -->
+              <h2 style="color: #2d3748; margin: 0 0 25px 0; font-size: 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+                ${title}
+              </h2>
+              
+              <!-- Message -->
+              <div style="color: #4a5568; font-size: 15px; line-height: 1.6;">
                 ${message}
-              </p>
+              </div>
               
+              <!-- OTP Section (if applicable) -->
               ${
                 otpCode
                   ? `
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                 <tr>
-                  <td align="center">
-                    <div style="background-color: #f0f9ff; border: 2px dashed #0891b2; border-radius: 8px; padding: 20px; display: inline-block;">
-                      <p style="color: #64748b; font-size: 14px; margin: 0 0 8px 0; font-weight: 500;">Your Verification Code</p>
-                      <p style="color: #1e3a8a; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">${otpCode}</p>
+                  <td>
+                    <p style="color: #718096; font-size: 14px; margin: 0 0 10px 0;">Verification Code:</p>
+                    <div style="background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 20px; text-align: center;">
+                      <p style="color: #2d3748; font-size: 28px; font-weight: bold; letter-spacing: 5px; margin: 0; font-family: 'Courier New', monospace;">
+                        ${otpCode}
+                      </p>
                     </div>
+                    <p style="color: #718096; font-size: 12px; margin: 10px 0 0 0; font-style: italic;">
+                      This code expires in 15 minutes. Do not share with anyone.
+                    </p>
                   </td>
                 </tr>
               </table>
-              
-              <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 20px 0 0 0;">
-                This code will expire in <strong>15 minutes</strong>. For your security, please do not share this code with anyone.
-              </p>
               `
                   : ""
               }
+              
             </td>
           </tr>
           
-          <!-- Footer -->
+          <!-- Action Required Notice -->
+          ${
+            otpCode
+              ? `
           <tr>
-            <td style="background-color: #f9fafb; padding: 30px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">
-                <strong>MoRental Car Rental</strong>
-              </p>
-              <p style="color: #9ca3af; font-size: 13px; margin: 0; line-height: 1.5;">
-                This is an automated message, please do not reply to this email.
-              </p>
+            <td style="padding: 0 40px 30px 40px;">
+              <div style="background-color: #fffaf0; border-left: 4px solid #ed8936; padding: 15px;">
+                <p style="color: #744210; font-size: 13px; margin: 0; font-weight: bold;">ACTION REQUIRED</p>
+                <p style="color: #975a16; font-size: 12px; margin: 5px 0 0 0;">
+                  Please use the verification code above to complete your requested action.
+                </p>
+              </div>
+            </td>
+          </tr>
+          `
+              : ""
+          }
+          
+          <!-- Official Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 0 0 15px 0; border-bottom: 1px solid #e2e8f0;">
+                    <p style="color: #4a5568; font-size: 14px; margin: 0 0 10px 0; font-weight: bold;">
+                      MAvHU Project
+                    </p>
+                    <p style="color: #718096; font-size: 12px; margin: 0; line-height: 1.5;">
+                      Health Research Initiative • Data Protection & Privacy Compliant
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 15px 0 0 0;">
+                    <p style="color: #a0aec0; font-size: 11px; margin: 0; line-height: 1.4;">
+                      This is an automated message from the MAvHU Project system.<br>
+                      Please do not reply to this email. For assistance, contact the project administrator.<br>
+                      © ${new Date().getFullYear()} MAvHU Project. All communications are confidential.
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           
@@ -91,9 +133,20 @@ function generateEmailTemplate({ title, message, otpCode = null }) {
  * Send verification email for new user registration
  */
 async function sendVerificationEmail({ to, fullName, otp }) {
-  const subject = "Verify Your Email - MoRental";
-  const title = "Welcome to MoRental!";
-  const message = `Hi ${fullName},<br><br>Thank you for registering with MoRental. To complete your registration and secure your account, please verify your email address using the code below.`;
+  const subject = "Account Verification - MAvHU Project";
+  const title = "Account Verification Required";
+  const message = `
+    <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
+    <p style="margin: 0 0 15px 0;">
+      Welcome to the MAvHU Project. Your account registration has been received and requires verification.
+    </p>
+    <p style="margin: 0 0 15px 0;">
+      To activate your account and access the research portal, please verify your email address using the verification code provided below.
+    </p>
+    <p style="margin: 0;">
+      Upon verification, you will gain access to project documents, research data, and collaboration tools as per your assigned permissions.
+    </p>
+  `;
 
   const html = generateEmailTemplate({
     title,
@@ -108,9 +161,20 @@ async function sendVerificationEmail({ to, fullName, otp }) {
  * Send account deletion confirmation email
  */
 async function sendDeleteAccountEmail({ to, fullName, otp }) {
-  const subject = "Confirm Account Deletion - MoRental";
-  const title = "Account Deletion Request";
-  const message = `Hi ${fullName},<br><br>We received a request to delete your MoRental account. To confirm this action, please enter the verification code below. If you did not request this, please ignore this email and your account will remain active.`;
+  const subject = "Account Deletion Request - MAvHU Project";
+  const title = "Account Deletion Confirmation";
+  const message = `
+    <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
+    <p style="margin: 0 0 15px 0;">
+      We have received a request to permanently delete your MAvHU Project account and all associated data.
+    </p>
+    <p style="margin: 0 0 15px 0;">
+      <strong>Important:</strong> This action will remove your access to all project resources, research data, and communication channels. All your contributions will be anonymized in accordance with our data retention policy.
+    </p>
+    <p style="margin: 0;">
+      To proceed with account deletion, please confirm this action using the verification code below. If you did not initiate this request, please disregard this email and immediately contact the project administrator.
+    </p>
+  `;
 
   const html = generateEmailTemplate({
     title,
@@ -125,9 +189,20 @@ async function sendDeleteAccountEmail({ to, fullName, otp }) {
  * Send password reset email
  */
 async function sendPasswordResetEmail({ to, fullName, otp }) {
-  const subject = "Reset Your Password - MoRental";
+  const subject = "Password Reset - MAvHU Project";
   const title = "Password Reset Request";
-  const message = `Hi ${fullName},<br><br>We received a request to reset your password. Use the verification code below to proceed with resetting your password. If you didn't request this, please ignore this email.`;
+  const message = `
+    <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
+    <p style="margin: 0 0 15px 0;">
+      A password reset request has been initiated for your MAvHU Project account.
+    </p>
+    <p style="margin: 0 0 15px 0;">
+      To reset your password and regain access to the research portal, please use the verification code provided below.
+    </p>
+    <p style="margin: 0;">
+      If you did not request a password reset, please ignore this email or contact the project security team immediately.
+    </p>
+  `;
 
   const html = generateEmailTemplate({
     title,
@@ -139,208 +214,9 @@ async function sendPasswordResetEmail({ to, fullName, otp }) {
 }
 
 /**
- * Send reservation confirmation email to customer
+ * Generate formal document-style template for notifications
  */
-async function sendReservationCustomerEmail({ to, fullName, reservation }) {
-  const subject = `Booking Confirmation - ${reservation.code}`;
-  const title = "Reservation Confirmed!";
-
-  const pickupBranch =
-    reservation.pickup?.branch_id?.name ||
-    reservation.pickup?.branch_id?.code ||
-    reservation.pickup?.branch_id?._id ||
-    "N/A";
-
-  const dropoffBranch =
-    reservation.dropoff?.branch_id?.name ||
-    reservation.dropoff?.branch_id?.code ||
-    reservation.dropoff?.branch_id?._id ||
-    "N/A";
-
-  const vehicleModel =
-    reservation.vehicle_model_id?.name ||
-    reservation.vehicle_model_id?._id ||
-    "TBA";
-
-  const currency = reservation.pricing?.currency || "";
-  const grandTotal = reservation.pricing?.grand_total?.toString() || "0.00";
-
-  const message = `Hi ${fullName},<br><br>Your reservation has been confirmed successfully. Below are your booking details:`;
-
-  const detailsHtml = `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0;">
-      <tr>
-        <td style="padding: 20px; background-color: #f9fafb; border-radius: 8px; border-left: 4px solid #0891b2;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Reservation Code</td>
-              <td style="padding: 8px 0; color: #1e3a8a; font-size: 14px; font-weight: 600; text-align: right;">${reservation.code}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Vehicle</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${vehicleModel}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Pickup Location</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${pickupBranch}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Pickup Date</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${reservation.pickupAt}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Dropoff Location</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${dropoffBranch}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Dropoff Date</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${reservation.dropoffAt}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Status</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right; text-transform: capitalize;">${reservation.status}</td>
-            </tr>
-            <tr>
-              <td colspan="2" style="padding: 12px 0 0 0; border-top: 1px solid #e5e7eb;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="padding: 8px 0; color: #1e3a8a; font-size: 16px; font-weight: 700;">Total Amount</td>
-                    <td style="padding: 8px 0; color: #1e3a8a; font-size: 18px; font-weight: 700; text-align: right;">${currency} ${grandTotal}</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-    <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 20px 0 0 0;">
-      If you have any questions or need to make changes to your reservation, please contact our support team.
-    </p>
-  `;
-
-  const html = generateReservationEmailTemplate({
-    title,
-    message,
-    detailsHtml,
-  });
-
-  await sendEmail({ to, subject, html });
-}
-
-/**
- * Send reservation notification email to staff/creator
- */
-async function sendReservationStaffEmail({
-  to,
-  fullName,
-  reservation,
-  customerInfo,
-}) {
-  const subject = `New Reservation Created - ${reservation.code}`;
-  const title = "New Reservation";
-
-  const pickupBranch =
-    reservation.pickup?.branch_id?.name ||
-    reservation.pickup?.branch_id?.code ||
-    reservation.pickup?.branch_id?._id ||
-    "N/A";
-
-  const dropoffBranch =
-    reservation.dropoff?.branch_id?.name ||
-    reservation.dropoff?.branch_id?.code ||
-    reservation.dropoff?.branch_id?._id ||
-    "N/A";
-
-  const vehicleModel =
-    reservation.vehicle_model_id?.name ||
-    reservation.vehicle_model_id?._id ||
-    "TBA";
-
-  const currency = reservation.pricing?.currency || "";
-  const grandTotal = reservation.pricing?.grand_total?.toString() || "0.00";
-
-  const message = `Hi ${fullName},<br><br>A new reservation has been created under your account. Here are the details:`;
-
-  const detailsHtml = `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0;">
-      <tr>
-        <td style="padding: 20px; background-color: #f9fafb; border-radius: 8px; border-left: 4px solid #0891b2;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Reservation Code</td>
-              <td style="padding: 8px 0; color: #1e3a8a; font-size: 14px; font-weight: 600; text-align: right;">${
-                reservation.code
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Customer</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${
-                customerInfo || "N/A"
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Vehicle</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${vehicleModel}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Pickup Location</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${pickupBranch}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Pickup Date</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${
-                reservation.pickupAt
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Dropoff Location</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${dropoffBranch}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Dropoff Date</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${
-                reservation.dropoffAt
-              }</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">Status</td>
-              <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right; text-transform: capitalize;">${
-                reservation.status
-              }</td>
-            </tr>
-            <tr>
-              <td colspan="2" style="padding: 12px 0 0 0; border-top: 1px solid #e5e7eb;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="padding: 8px 0; color: #1e3a8a; font-size: 16px; font-weight: 700;">Total Amount</td>
-                    <td style="padding: 8px 0; color: #1e3a8a; font-size: 18px; font-weight: 700; text-align: right;">${currency} ${grandTotal}</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-    <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 20px 0 0 0;">
-      You can manage this reservation from the MoRental admin portal.
-    </p>
-  `;
-
-  const html = generateReservationEmailTemplate({
-    title,
-    message,
-    detailsHtml,
-  });
-
-  await sendEmail({ to, subject, html });
-}
-
-/**
- * Generate reservation email template (without OTP code)
- */
-function generateReservationEmailTemplate({ title, message, detailsHtml }) {
+function generateDocumentTemplate({ title, message, details = null }) {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -349,40 +225,85 @@ function generateReservationEmailTemplate({ title, message, detailsHtml }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #ffffff;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
           
-          <!-- Header with Logo -->
+          <!-- Official Letterhead -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%); padding: 30px 40px; text-align: center;">
-              <img src="https://aamokxxnfpmdpayvmngs.supabase.co/storage/v1/object/public/medicineimages/MR3.png" alt="MoRental Logo" style="max-width: 180px; height: auto;">
+            <td style="border-bottom: 3px solid #1a365d; padding: 30px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <h1 style="color: #1a365d; margin: 0; font-size: 22px; font-weight: bold; letter-spacing: 1px;">
+                      MAvHU PROJECT
+                    </h1>
+                    <p style="color: #4a5568; margin: 5px 0 0 0; font-size: 13px;">
+                      OFFICIAL COMMUNICATION
+                    </p>
+                  </td>
+                  <td align="right" style="vertical-align: top;">
+                    <p style="color: #718096; margin: 0; font-size: 11px;">
+                      ${new Date().toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           
-          <!-- Content -->
+          <!-- Document Content -->
           <tr>
-            <td style="padding: 40px;">
-              <h2 style="color: #1e3a8a; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">${title}</h2>
+            <td style="padding: 35px 40px 25px 40px;">
               
-              <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0;">
+              <!-- Document Title -->
+              <h2 style="color: #2d3748; margin: 0 0 25px 0; font-size: 18px; font-weight: bold;">
+                ${title}
+              </h2>
+              
+              <!-- Main Content -->
+              <div style="color: #4a5568; font-size: 14px; line-height: 1.7;">
                 ${message}
-              </p>
+              </div>
               
-              ${detailsHtml}
+              <!-- Details Section -->
+              ${details || ""}
+              
             </td>
           </tr>
           
-          <!-- Footer -->
+          <!-- Signature/Authority Section -->
           <tr>
-            <td style="background-color: #f9fafb; padding: 30px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">
-                <strong>MoRental Car Rental</strong>
-              </p>
-              <p style="color: #9ca3af; font-size: 13px; margin: 0; line-height: 1.5;">
-                This is an automated message, please do not reply to this email.
+            <td style="padding: 25px 40px 30px 40px; border-top: 1px solid #e2e8f0;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="color: #4a5568; font-size: 12px; margin: 0 0 5px 0; font-weight: bold;">
+                      MAvHU Project Administration
+                    </p>
+                    <p style="color: #718096; font-size: 11px; margin: 0; line-height: 1.5;">
+                      Health Research Coordination • Data Management • Project Oversight<br>
+                      This communication is generated and authorized by the MAvHU Project system.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Confidential Footer -->
+          <tr>
+            <td style="background-color: #1a365d; padding: 20px 40px;">
+              <p style="color: #cbd5e0; font-size: 10px; margin: 0; text-align: center; line-height: 1.4;">
+                CONFIDENTIAL: This email and any attachments contain information which is confidential and may be privileged.<br>
+                It is intended for the named recipient(s) only. If you are not the intended recipient, please notify the sender immediately.<br>
+                Unauthorized use, disclosure, copying, or distribution is prohibited. © MAvHU Project.
               </p>
             </td>
           </tr>
@@ -397,18 +318,135 @@ function generateReservationEmailTemplate({ title, message, detailsHtml }) {
 }
 
 /**
+ * Send project notification email
+ */
+async function sendProjectNotificationEmail({ to, fullName, notification }) {
+  const subject = `Project Notification: ${notification.subject}`;
+  const title = notification.subject;
+
+  const message = `
+    <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
+    <p style="margin: 0 0 15px 0;">
+      ${notification.message}
+    </p>
+    ${
+      notification.details
+        ? `<p style="margin: 0 0 15px 0;">${notification.details}</p>`
+        : ""
+    }
+    <p style="margin: 0;">
+      This notification is part of the MAvHU Project's communication protocol. Please take appropriate action as required.
+    </p>
+  `;
+
+  let detailsHtml = "";
+  if (notification.metadata) {
+    detailsHtml = `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0; background-color: #f8fafc; border: 1px solid #e2e8f0;">
+        <tr>
+          <td style="padding: 15px;">
+            <p style="color: #4a5568; font-size: 12px; margin: 0 0 10px 0; font-weight: bold;">
+              ADDITIONAL INFORMATION:
+            </p>
+            ${Object.entries(notification.metadata)
+              .map(
+                ([key, value]) => `
+              <p style="color: #718096; font-size: 12px; margin: 0 0 5px 0;">
+                <span style="font-weight: bold;">${key}:</span> ${value}
+              </p>
+            `
+              )
+              .join("")}
+          </td>
+        </tr>
+      </table>
+    `;
+  }
+
+  const html = generateDocumentTemplate({
+    title,
+    message,
+    details: detailsHtml,
+  });
+
+  await sendEmail({ to, subject, html });
+}
+
+/**
+ * Send data submission confirmation
+ */
+async function sendDataSubmissionEmail({ to, fullName, submission }) {
+  const subject = `Data Submission Received - ${submission.reference}`;
+  const title = "Data Submission Acknowledgement";
+
+  const message = `
+    <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
+    <p style="margin: 0 0 15px 0;">
+      This email confirms that the MAvHU Project has received your data submission.
+    </p>
+    <p style="margin: 0;">
+      Your contribution has been logged and will undergo the standard verification process. You will be notified once the data has been processed and integrated into the research database.
+    </p>
+  `;
+
+  const detailsHtml = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0; background-color: #f8fafc; border: 1px solid #e2e8f0;">
+      <tr>
+        <td style="padding: 15px;">
+          <p style="color: #4a5568; font-size: 12px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">
+            SUBMISSION DETAILS
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding: 5px 0; color: #718096; font-size: 12px; width: 150px;">Reference ID:</td>
+              <td style="padding: 5px 0; color: #4a5568; font-size: 12px; font-weight: bold;">${submission.reference}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0; color: #718096; font-size: 12px;">Submission Date:</td>
+              <td style="padding: 5px 0; color: #4a5568; font-size: 12px;">${submission.date}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0; color: #718096; font-size: 12px;">Type:</td>
+              <td style="padding: 5px 0; color: #4a5568; font-size: 12px;">${submission.type}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0; color: #718096; font-size: 12px;">Status:</td>
+              <td style="padding: 5px 0; color: #4a5568; font-size: 12px;">RECEIVED</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const html = generateDocumentTemplate({
+    title,
+    message,
+    details: detailsHtml,
+  });
+
+  await sendEmail({ to, subject, html });
+}
+
+/**
  * Base email sending function
  */
 async function sendEmail({ to, subject, text, html }) {
   const mailOptions = {
-    from: `MoRental <${process.env.EMAIL_USER}>`,
+    from: `MAvHU Project <${process.env.EMAIL_USER}>`,
     to,
     subject,
-    text,
-    html: html || `<p>${text}</p>`,
+    text: text || subject,
+    html: html || `<p>${text || subject}</p>`,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${to}: ${subject}`);
+  } catch (error) {
+    console.error("Email sending failed:", error);
+    throw error;
+  }
 }
 
 module.exports = {
@@ -416,6 +454,8 @@ module.exports = {
   sendVerificationEmail,
   sendDeleteAccountEmail,
   sendPasswordResetEmail,
-  sendReservationCustomerEmail,
-  sendReservationStaffEmail,
+  sendProjectNotificationEmail,
+  sendDataSubmissionEmail,
+  generateEmailTemplate,
+  generateDocumentTemplate,
 };
