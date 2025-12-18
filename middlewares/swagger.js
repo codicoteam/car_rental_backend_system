@@ -2859,6 +2859,202 @@ const options = {
           required: ["code", "type", "value", "valid_from"],
         },
 
+        Notification: {
+          type: "object",
+          description:
+            "Notifications for users (in-app/email/sms/push) with audience targeting, scheduling, acknowledgements, and optional CTA.",
+          properties: {
+            _id: { type: "string", example: "6750f1e0c1a2b34de0not001" },
+
+            title: {
+              type: "string",
+              maxLength: 160,
+              example: "Payment received",
+            },
+
+            message: {
+              type: "string",
+              maxLength: 4000,
+              example: "Your payment of USD 150.00 was received successfully.",
+            },
+
+            type: {
+              type: "string",
+              enum: [
+                "info",
+                "system",
+                "promo",
+                "booking",
+                "payment",
+                "maintenance",
+                "alert",
+              ],
+              example: "payment",
+            },
+
+            priority: {
+              type: "string",
+              enum: ["low", "normal", "high", "critical"],
+              example: "normal",
+            },
+
+            audience: {
+              type: "object",
+              description: "Defines who should receive the notification.",
+              properties: {
+                scope: {
+                  type: "string",
+                  enum: ["all", "user", "roles"],
+                  example: "all",
+                },
+                user_id: {
+                  type: "string",
+                  nullable: true,
+                  description: "Required when scope === 'user'",
+                  example: "665a8c7be4f1c23b04d12345",
+                },
+                roles: {
+                  type: "array",
+                  nullable: true,
+                  description: "Required (non-empty) when scope === 'roles'",
+                  items: {
+                    type: "string",
+                    enum: ["customer", "agent", "manager", "admin", "driver"],
+                  },
+                  example: ["customer"],
+                },
+              },
+            },
+
+            channels: {
+              type: "array",
+              description: "Dispatch channels (must be non-empty).",
+              items: {
+                type: "string",
+                enum: ["in_app", "email", "sms", "push"],
+              },
+              example: ["in_app"],
+            },
+
+            send_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              description: "When to start dispatch (scheduled time).",
+              example: "2025-01-01T10:00:00Z",
+            },
+
+            sent_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              example: "2025-01-01T10:00:05Z",
+            },
+
+            expires_at: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              description:
+                "Optional expiry (TTL index removes after this time).",
+              example: "2025-02-01T00:00:00Z",
+            },
+
+            status: {
+              type: "string",
+              enum: ["draft", "scheduled", "sent", "cancelled"],
+              example: "draft",
+            },
+
+            is_active: {
+              type: "boolean",
+              example: true,
+            },
+
+            action_text: {
+              type: "string",
+              nullable: true,
+              example: "View receipt",
+            },
+
+            action_url: {
+              type: "string",
+              nullable: true,
+              example: "https://example.com/payments/6750f1e0c1a2b34de0pay001",
+            },
+
+            data: {
+              type: "object",
+              description: "Arbitrary non-sensitive payload.",
+              example: {
+                reservation_id: "6750f1e0c1a2b34de0res001",
+                amount: "150.00",
+              },
+            },
+
+            acknowledgements: {
+              type: "array",
+              description:
+                "Read/acted receipts for users who have interacted with the notification.",
+              items: {
+                type: "object",
+                properties: {
+                  user_id: {
+                    type: "string",
+                    example: "665a8c7be4f1c23b04d12345",
+                  },
+                  read_at: {
+                    type: "string",
+                    format: "date-time",
+                    nullable: true,
+                    example: "2025-01-01T10:01:00Z",
+                  },
+                  acted_at: {
+                    type: "string",
+                    format: "date-time",
+                    nullable: true,
+                    example: "2025-01-01T10:02:00Z",
+                  },
+                  action: {
+                    type: "string",
+                    nullable: true,
+                    description:
+                      "Optional custom action label (e.g. clicked CTA).",
+                    example: "clicked_receipt",
+                  },
+                },
+              },
+              example: [
+                {
+                  user_id: "665a8c7be4f1c23b04d12345",
+                  read_at: "2025-01-01T10:01:00Z",
+                  acted_at: "2025-01-01T10:02:00Z",
+                  action: "clicked_receipt",
+                },
+              ],
+            },
+
+            created_by: {
+              type: "string",
+              nullable: true,
+              description: "User ObjectId (creator/admin/agent).",
+              example: "665a8c7be4f1c23b04d99999",
+            },
+
+            created_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-01-01T09:55:00Z",
+            },
+
+            updated_at: {
+              type: "string",
+              format: "date-time",
+              example: "2025-01-01T10:00:10Z",
+            },
+          },
+        },
+
         // ---------- ERROR ----------
 
         Error: {
@@ -2914,9 +3110,10 @@ const options = {
         description: "Car rental reservations / bookings",
       },
       {
-  name: "Payments",
-  description: "Payment transactions for reservations and driver bookings",
-},
+        name: "Payments",
+        description:
+          "Payment transactions for reservations and driver bookings",
+      },
 
       {
         name: "RatePlans",
@@ -2931,6 +3128,11 @@ const options = {
         name: "DriverBookings",
         description:
           "Standalone driver booking flows (customer selects a driver and pays after driver accepts).",
+      },
+      {
+        name: "Notifications",
+        description:
+          "User notifications for system events, bookings, payments, and alerts",
       },
     ],
   },
@@ -2950,7 +3152,8 @@ const options = {
     "./routers/vehicle_incident_router.js",
     "./routers/chat_router.js",
     "./routers/vehicle_tracker_router.js",
-    "./routers/payment_router.js",  
+    "./routers/payment_router.js",
+    "./routers/notifications_router.js",
   ],
 };
 
