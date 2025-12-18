@@ -28,6 +28,7 @@ const serviceScheduleRouter = require("./routers/service_schedule_router");
 const vehicleIncidentRouter = require("./routers/vehicle_incident_router");
 const chatRouter = require("./routers/chat_router");
 const vehicleTrackerRouter = require("./routers/vehicle_tracker_router");
+const paymentRouter = require("./routers/payment_router");
 
 // Load env
 dotenv.config();
@@ -62,6 +63,7 @@ app.use("/api/v1/service-schedules", serviceScheduleRouter);
 app.use("/api/v1/vehicle-incidents", vehicleIncidentRouter);
 app.use("/api/v1/chats", chatRouter);
 app.use("/api/v1/vehicle-trackers", vehicleTrackerRouter);
+app.use("/api/v1/payments", paymentRouter);
 
 // Global error handler (REST)
 app.use((err, req, res, next) => {
