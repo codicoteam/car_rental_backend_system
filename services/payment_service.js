@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const Payment = require("../models/payment_model"); // your Payment schema file
 const PromoCode = require("../models/promo_code_model"); // your PromoCode schema file
 const Paynow = require("paynow"); // npm i paynow
+require("dotenv").config();
 
 const { PAYNOW_ID, PAYNOW_KEY, PAYNOW_RESULT_URL, PAYNOW_RETURN_URL } =
   process.env;
