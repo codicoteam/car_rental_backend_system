@@ -1,12 +1,15 @@
 // controllers/notifications_controller.js
 const svc = require("../services/notifications_service");
+const mongoose = require("mongoose");
 
 function sendError(res, err) {
   const status = err.status || 500;
   return res.status(status).json({
     success: false,
     message: err.message || "Internal server error.",
-    ...(process.env.NODE_ENV !== "production" && err.stack ? { stack: err.stack } : {}),
+    ...(process.env.NODE_ENV !== "production" && err.stack
+      ? { stack: err.stack }
+      : {}),
   });
 }
 
@@ -15,7 +18,10 @@ module.exports = {
   create: async (req, res) => {
     try {
       const payload = req.body || {};
-      const doc = await svc.createNotification({ payload, created_by: req.user?._id });
+      const doc = await svc.createNotification({
+        payload,
+        created_by: req.user?._id,
+      });
       return res.status(201).json({ success: true, notification: doc });
     } catch (err) {
       return sendError(res, err);
@@ -134,7 +140,11 @@ module.exports = {
   ackAction: async (req, res) => {
     try {
       const { action } = req.body || {};
-      const out = await svc.ackAction({ id: req.params.id, user: req.user, action });
+      const out = await svc.ackAction({
+        id: req.params.id,
+        user: req.user,
+        action,
+      });
       return res.status(200).json({ success: true, ...out });
     } catch (err) {
       return sendError(res, err);
@@ -157,6 +167,58 @@ module.exports = {
     try {
       const acks = await svc.listAcknowledgements(req.params.id);
       return res.json({ success: true, acknowledgements: acks });
+    } catch (err) {
+      return sendError(res, err);
+    }
+  },
+
+  // GET /for-user/:userId
+  listForUserById: async (req, res) => {
+    try {
+      const { onlyUnread, includeFuture, roles } = req.query;
+
+      const userId = new mongoose.Types.ObjectId(String(req.params.userId));
+
+      // roles can be provided as CSV: ?roles=customer,driver
+      const roleList =
+        typeof roles === "string" && roles.trim()
+          ? roles
+              .split(",")
+              .map((r) => r.trim())
+              .filter(Boolean)
+          : [];
+
+      const items = await svc.listForUserById({
+        userId,
+        roles: roleList,
+        onlyUnread: String(onlyUnread) === "true",
+        includeFuture: String(includeFuture) === "true",
+      });
+
+      return res.json({ success: true, items, total: items.length });
+    } catch (err) {
+      return sendError(res, err);
+    }
+  },
+
+  // GET /created-by/:userId
+  listCreatedByUserId: async (req, res) => {
+    try {
+      const { status, type, priority, active } = req.query;
+
+      const createdByUserId = new mongoose.Types.ObjectId(
+        String(req.params.userId)
+      );
+
+      const items = await svc.listCreatedByUserId({
+        createdByUserId,
+        status,
+        type,
+        priority,
+        active: typeof active === "string" ? active === "true" : undefined,
+      });
+
+      return res.json({ success: true, items, total: items.length });
     } catch (err) {
       return sendError(res, err);
     }

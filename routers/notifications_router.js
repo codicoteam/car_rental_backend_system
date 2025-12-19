@@ -378,4 +378,96 @@ router.post("/bulk/read", authMiddleware, ctrl.bulkRead);
  */
 router.get("/:id/acks", authMiddleware, ctrl.listAcks);
 
+
+
+/**
+ * @swagger
+ * /api/v1/notifications/for-user/{userId}:
+ *   get:
+ *     summary: List notifications visible/sent to a specific user (no pagination)
+ *     tags: [Notifications]
+ *     security: [ { bearerAuth: [] } ]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *         description: Target user's Mongo ObjectId
+ *       - in: query
+ *         name: onlyUnread
+ *         schema: { type: boolean, default: false }
+ *         description: If true, return only unread notifications for that user
+ *       - in: query
+ *         name: includeFuture
+ *         schema: { type: boolean, default: false }
+ *         description: If true, include scheduled notifications that are not yet due
+ *       - in: query
+ *         name: roles
+ *         schema: { type: string, example: "customer,driver" }
+ *         description: Comma-separated roles for that user (used when audience.scope=roles)
+ *     responses:
+ *       200:
+ *         description: List of notifications (no pagination)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 total: { type: integer }
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/Notification"
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/for-user/:userId", authMiddleware, ctrl.listForUserById);
+
+/**
+ * @swagger
+ * /api/v1/notifications/created-by/{userId}:
+ *   get:
+ *     summary: List notifications created by a specific user (no pagination)
+ *     tags: [Notifications]
+ *     security: [ { bearerAuth: [] } ]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *         description: Creator user's Mongo ObjectId (created_by)
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: ["draft","scheduled","sent","cancelled"] }
+ *       - in: query
+ *         name: type
+ *         schema: { type: string, enum: ["info","system","promo","booking","payment","maintenance","alert"] }
+ *       - in: query
+ *         name: priority
+ *         schema: { type: string, enum: ["low","normal","high","critical"] }
+ *       - in: query
+ *         name: active
+ *         schema: { type: boolean }
+ *         description: Filter by is_active
+ *     responses:
+ *       200:
+ *         description: List of notifications (no pagination)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 total: { type: integer }
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/Notification"
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/created-by/:userId", authMiddleware, ctrl.listCreatedByUserId);
+
+
 module.exports = router;

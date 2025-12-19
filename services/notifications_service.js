@@ -1,11 +1,10 @@
 // services/notifications_service.js
 const mongoose = require("mongoose");
 const Notification = require("../models/notifications_models");
+const User = require("../models/user_model"); // adjust path to your User model
 
 /** Helper: build audience filter for "mine" */
-function buildMineAudienceFilter(user) {
-  const userId = user._id;
-  const roles = Array.isArray(user.roles) ? user.roles : [];
+function buildAudienceFilterForUser({ userId, roles = [] }) {
   return {
     $or: [
       { "audience.scope": "all" },
@@ -16,6 +15,50 @@ function buildMineAudienceFilter(user) {
       },
     ],
   };
+}
+
+/** LIST notifications delivered/visible to a specific user (no pagination) */
+async function listForUserById({
+  userId,
+  roles = [],
+  onlyUnread = false,
+  includeFuture = false,
+}) {
+  const now = new Date();
+
+  const q = {
+    is_active: true,
+    $and: [
+      buildAudienceFilterForUser({ userId, roles }),
+      {
+        $or: [
+          { status: "sent" },
+          includeFuture
+            ? { status: "scheduled" }
+            : { status: "scheduled", send_at: { $lte: now } },
+        ],
+      },
+      { $or: [{ expires_at: null }, { expires_at: { $gt: now } }] },
+    ],
+  };
+
+  if (onlyUnread) {
+    q.$and.push({
+      $or: [
+        { acknowledgements: { $size: 0 } },
+        { "acknowledgements.user_id": { $ne: userId } },
+        {
+          $and: [
+            { "acknowledgements.user_id": userId },
+            { "acknowledgements.read_at": null },
+          ],
+        },
+      ],
+    });
+  }
+
+  // no pagination
+  return Notification.find(q).sort("-created_at");
 }
 
 /** CREATE */
@@ -318,6 +361,22 @@ async function listAcknowledgements(id) {
   return doc.acknowledgements || [];
 }
 
+
+/** LIST notifications created by a specific user (no pagination) */
+async function listCreatedByUserId({ createdByUserId, status, type, priority, active }) {
+  const q = { created_by: createdByUserId };
+
+  if (typeof active === "boolean") q.is_active = active;
+  if (status) q.status = status;
+  if (type) q.type = type;
+  if (priority) q.priority = priority;
+
+  return Notification.find(q).sort("-created_at");
+}
+
+
+
+
 module.exports = {
   createNotification,
   listNotifications,
@@ -332,4 +391,6 @@ module.exports = {
   ackAction,
   bulkMarkRead,
   listAcknowledgements,
+  listForUserById,
+  listCreatedByUserId
 };
