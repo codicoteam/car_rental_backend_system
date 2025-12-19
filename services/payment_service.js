@@ -1,8 +1,10 @@
 // services/payment_service.js
 const mongoose = require("mongoose");
-const Payment = require("../models/payment_model"); // your Payment schema file
-const PromoCode = require("../models/promo_code_model"); // your PromoCode schema file
-const Paynow = require("paynow"); // npm i paynow
+const Payment = require("../models/payment_model");
+const PromoCode = require("../models/promo_code_model");
+
+// Paynow SDK
+const { Paynow } = require("paynow");
 require("dotenv").config();
 
 const { PAYNOW_ID, PAYNOW_KEY, PAYNOW_RESULT_URL, PAYNOW_RETURN_URL } =
@@ -12,10 +14,47 @@ function initPaynow() {
   if (!PAYNOW_ID || !PAYNOW_KEY) {
     throw new Error("Paynow credentials are not configured.");
   }
-  const paynow = new Paynow(PAYNOW_ID, PAYNOW_KEY);
-  if (PAYNOW_RESULT_URL) paynow.resultUrl(PAYNOW_RESULT_URL);
-  if (PAYNOW_RETURN_URL) paynow.returnUrl(PAYNOW_RETURN_URL);
+
+  const paynow = new Paynow(String(PAYNOW_ID), String(PAYNOW_KEY));
+
+  if (PAYNOW_RESULT_URL) paynow.resultUrl = PAYNOW_RESULT_URL;
+  if (PAYNOW_RETURN_URL) paynow.returnUrl = PAYNOW_RETURN_URL;
+
   return paynow;
+}
+
+/**
+ * ✅ Normalize incoming ids safely:
+ * - Accepts ObjectId or valid ObjectId string
+ * - Converts "string", "null", "undefined", "" to null
+ * - Throws a 400 error for invalid ObjectId values
+ */
+function normalizeObjectId(val, fieldName) {
+  if (val === null || val === undefined) return null;
+
+  // if already an ObjectId
+  if (val instanceof mongoose.Types.ObjectId) return val;
+
+  // stringify and trim
+  const s = String(val).trim();
+
+  // common bad placeholders from clients
+  if (
+    s === "" ||
+    s.toLowerCase() === "null" ||
+    s.toLowerCase() === "undefined" ||
+    s.toLowerCase() === "string"
+  ) {
+    return null;
+  }
+
+  if (!mongoose.isValidObjectId(s)) {
+    const err = new Error(`${fieldName} must be a valid ObjectId.`);
+    err.status = 400;
+    throw err;
+  }
+
+  return new mongoose.Types.ObjectId(s);
 }
 
 /** Convert decimal/number/str to Decimal128 */
@@ -31,29 +70,28 @@ function fromDec128(d) {
 }
 
 /** Validate & compute promo discount for a raw amount */
-async function computePromoDiscount({ code, amount, currency, context = {} }) {
+async function computePromoDiscount({ code, amount, currency }) {
   if (!code) return { discount: 0, promo: null, reason: null };
+
   const now = new Date();
   const promo = await PromoCode.findOne({
-    code: code.toUpperCase(),
+    code: String(code).toUpperCase(),
     active: true,
   });
+
   if (!promo) return { discount: 0, promo: null, reason: "INVALID_CODE" };
 
-  if (promo.valid_from && now < promo.valid_from) {
+  if (promo.valid_from && now < promo.valid_from)
     return { discount: 0, promo, reason: "NOT_STARTED" };
-  }
-  if (promo.valid_to && now > promo.valid_to) {
-    return { discount: 0, promo, reason: "EXPIRED" };
-  }
-  if (promo.usage_limit && promo.used_count >= promo.usage_limit) {
-    return { discount: 0, promo, reason: "USAGE_LIMIT_REACHED" };
-  }
 
-  // (Optional) contextual constraints (class, days, branch) can be checked via `context`
-  // Skipping nuanced checks unless you pass in context.
+  if (promo.valid_to && now > promo.valid_to)
+    return { discount: 0, promo, reason: "EXPIRED" };
+
+  if (promo.usage_limit && promo.used_count >= promo.usage_limit)
+    return { discount: 0, promo, reason: "USAGE_LIMIT_REACHED" };
 
   let discount = 0;
+
   if (promo.type === "percent") {
     const pct = Math.max(0, Math.min(100, promo.value));
     discount = (pct / 100) * amount;
@@ -69,7 +107,11 @@ async function computePromoDiscount({ code, amount, currency, context = {} }) {
   return { discount, promo, reason: null };
 }
 
-/** Create a Payment document (pending) */
+/**
+ * ✅ Create a Payment document (pending)
+ * Enforces: exactly one of reservation_id or driver_booking_id must be present.
+ * Also prevents the "Cast to ObjectId failed for value 'string'" issue.
+ */
 async function createPaymentDoc({
   user_id,
   reservation_id,
@@ -83,25 +125,57 @@ async function createPaymentDoc({
   pollUrl = "not available",
   provider_ref,
 }) {
+  const reservationObjId = normalizeObjectId(reservation_id, "reservation_id");
+  const driverBookingObjId = normalizeObjectId(
+    driver_booking_id,
+    "driver_booking_id"
+  );
+
+  const hasReservation = !!reservationObjId;
+  const hasDriverBooking = !!driverBookingObjId;
+
+  // exactly one
+  if (!hasReservation && !hasDriverBooking) {
+    const err = new Error(
+      "You must provide either reservation_id or driver_booking_id."
+    );
+    err.status = 400;
+    throw err;
+  }
+  if (hasReservation && hasDriverBooking) {
+    const err = new Error(
+      "Provide only one: reservation_id OR driver_booking_id (not both)."
+    );
+    err.status = 400;
+    throw err;
+  }
+
   const payment = await Payment.create({
     user_id,
-    reservation_id: reservation_id || null,
-    driver_booking_id: driver_booking_id || null,
+    reservation_id: reservationObjId,
+    driver_booking_id: driverBookingObjId,
+
     provider,
     method,
+
     amount: toDec128(discountedAmount),
     currency,
+
     paymentStatus: "pending",
     pollUrl,
+
     pricePaid: Number(discountedAmount.toFixed(2)),
     promotionApplied: !!promo,
     promotionDiscount: promo
       ? Number((amount - discountedAmount).toFixed(2))
       : 0,
+
     promo_code_id: promo?.id || null,
     promo_code: promo?.code || null,
+
     provider_ref,
   });
+
   return payment;
 }
 
@@ -113,18 +187,25 @@ async function initiateRedirectPayment({
   amount,
   currency = "USD",
   promo_code,
-  reference, // your internal reference string
-  payerEmail, // optional
+  reference,
+  payerEmail,
   lineItem = "Payment",
 }) {
   const paynow = initPaynow();
+
   const amt = parseFloat(amount);
-  if (!amt || amt <= 0) throw new Error("Amount must be greater than zero.");
+  if (!amt || amt <= 0) {
+    const err = new Error("Amount must be greater than zero.");
+    err.status = 400;
+    throw err;
+  }
+
   const { discount, promo, reason } = await computePromoDiscount({
     code: promo_code,
     amount: amt,
     currency,
   });
+
   const finalAmount = amt - discount;
 
   const paymentReq = paynow.createPayment(
@@ -145,7 +226,7 @@ async function initiateRedirectPayment({
     user_id: user._id,
     reservation_id,
     driver_booking_id,
-    method: "card", // generic redirect method
+    method: "card",
     amount: amt,
     currency,
     promo: promo_code && !reason ? { code: promo.code, id: promo._id } : null,
@@ -162,7 +243,7 @@ async function initiateRedirectPayment({
   };
 }
 
-/** Initiate mobile payment (Ecocash/OneMoney/Telecash if supported) */
+/** Initiate mobile payment */
 async function initiateMobilePayment({
   user,
   reservation_id,
@@ -170,21 +251,31 @@ async function initiateMobilePayment({
   amount,
   currency = "USD",
   promo_code,
-  phone, // e.g. 077xxxxxxx
-  mobileMethod = "ecocash", // 'ecocash', 'onemoney' etc. (as supported by paynow)
+  phone,
+  mobileMethod = "ecocash",
   reference,
   lineItem = "Mobile Payment",
 }) {
   const paynow = initPaynow();
+
   const amt = parseFloat(amount);
-  if (!amt || amt <= 0) throw new Error("Amount must be greater than zero.");
-  if (!phone) throw new Error("Phone is required for mobile payment.");
+  if (!amt || amt <= 0) {
+    const err = new Error("Amount must be greater than zero.");
+    err.status = 400;
+    throw err;
+  }
+  if (!phone) {
+    const err = new Error("Phone is required for mobile payment.");
+    err.status = 400;
+    throw err;
+  }
 
   const { discount, promo, reason } = await computePromoDiscount({
     code: promo_code,
     amount: amt,
     currency,
   });
+
   const finalAmount = amt - discount;
 
   const paymentReq = paynow.createPayment(reference || `REF-${Date.now()}`);
@@ -219,10 +310,11 @@ async function initiateMobilePayment({
   };
 }
 
-/** Poll Paynow for status (by paymentId or pollUrl) */
+/** Poll Paynow for status */
 async function pollStatus({ paymentId, pollUrl }) {
   const paynow = initPaynow();
   let payment = null;
+
   if (paymentId) {
     payment = await Payment.findById(paymentId);
     if (!payment) {
@@ -232,6 +324,7 @@ async function pollStatus({ paymentId, pollUrl }) {
     }
     pollUrl = payment.pollUrl;
   }
+
   if (!pollUrl || pollUrl === "not available") {
     const err = new Error("No pollUrl available for this payment.");
     err.status = 400;
@@ -245,8 +338,6 @@ async function pollStatus({ paymentId, pollUrl }) {
     throw err;
   }
 
-  // Map Paynow statuses to our enums
-  // Typical statuses: Paid, Awaiting Delivery, Delivered, Cancelled, Failed, Created, Sent
   const mapStatus = (s) => {
     const x = String(s || "").toLowerCase();
     if (x.includes("paid")) return "paid";
@@ -262,14 +353,12 @@ async function pollStatus({ paymentId, pollUrl }) {
   const provider_ref =
     response.reference || (payment ? payment.provider_ref : undefined);
 
-  // Update payment if we loaded it
   if (payment) {
     payment.paymentStatus = newStatus;
     if (newStatus === "paid" && !payment.captured_at) {
       payment.captured_at = new Date();
     }
-    if (provider_ref && !payment.provider_ref)
-      payment.provider_ref = provider_ref;
+    if (provider_ref && !payment.provider_ref) payment.provider_ref = provider_ref;
     await payment.save();
   }
 
@@ -283,7 +372,7 @@ async function pollStatus({ paymentId, pollUrl }) {
   };
 }
 
-/** Apply promo code to an existing pending payment (recomputes amount) */
+/** Apply promo code to an existing pending payment */
 async function applyPromo({ paymentId, code }) {
   const payment = await Payment.findById(paymentId);
   if (!payment) {
@@ -291,10 +380,7 @@ async function applyPromo({ paymentId, code }) {
     err.status = 404;
     throw err;
   }
-  if (
-    payment.paymentStatus !== "pending" &&
-    payment.paymentStatus !== "unpaid"
-  ) {
+  if (payment.paymentStatus !== "pending" && payment.paymentStatus !== "unpaid") {
     const err = new Error("Cannot apply promo to a non-pending payment.");
     err.status = 409;
     throw err;
@@ -303,6 +389,7 @@ async function applyPromo({ paymentId, code }) {
   const base =
     fromDec128(payment.amount) +
     (payment.promotionApplied ? payment.promotionDiscount : 0);
+
   const { discount, promo, reason } = await computePromoDiscount({
     code,
     amount: base,
@@ -313,6 +400,7 @@ async function applyPromo({ paymentId, code }) {
   payment.promotionDiscount = discount;
   payment.promo_code_id = promo && !reason ? promo._id : null;
   payment.promo_code = promo && !reason ? promo.code : null;
+
   const newAmount = base - discount;
   payment.amount = toDec128(newAmount);
   payment.pricePaid = Number(newAmount.toFixed(2));
@@ -329,19 +417,16 @@ async function removePromo({ paymentId }) {
     err.status = 404;
     throw err;
   }
-  if (
-    payment.paymentStatus !== "pending" &&
-    payment.paymentStatus !== "unpaid"
-  ) {
+  if (payment.paymentStatus !== "pending" && payment.paymentStatus !== "unpaid") {
     const err = new Error("Cannot remove promo from a non-pending payment.");
     err.status = 409;
     throw err;
   }
 
-  // restore original base = amount + discount
   const base =
     fromDec128(payment.amount) +
     (payment.promotionApplied ? payment.promotionDiscount : 0);
+
   payment.promotionApplied = false;
   payment.promotionDiscount = 0;
   payment.promo_code_id = null;
@@ -371,7 +456,7 @@ async function cancelPayment({ paymentId }) {
   return { payment };
 }
 
-/** Record a refund locally (Paynow refunds typically require portal/manual) */
+/** Record a refund locally */
 async function refundPayment({ paymentId, amount, provider_ref }) {
   const payment = await Payment.findById(paymentId);
   if (!payment) {
@@ -384,17 +469,20 @@ async function refundPayment({ paymentId, amount, provider_ref }) {
     err.status = 409;
     throw err;
   }
+
   const amt = parseFloat(amount);
   if (!amt || amt <= 0) {
     const err = new Error("Refund amount must be greater than zero.");
     err.status = 400;
     throw err;
   }
+
   const alreadyRefunded = (payment.refunds || []).reduce(
     (sum, r) => sum + fromDec128(r.amount),
     0
   );
   const remaining = fromDec128(payment.amount) - alreadyRefunded;
+
   if (amt > remaining + 1e-6) {
     const err = new Error("Refund exceeds remaining amount.");
     err.status = 400;
@@ -407,27 +495,26 @@ async function refundPayment({ paymentId, amount, provider_ref }) {
     at: new Date(),
   });
   await payment.save();
+
   return { payment, refunded: amt, totalRefunded: alreadyRefunded + amt };
 }
 
-/** Webhook/result handler: update status using poll or payload */
+/** Webhook/result handler */
 async function handlePaynowWebhook({ query = {}, body = {} }) {
-  // Paynow typically recommends polling using pollUrl; however, they also POST back.
-  // Try to locate payment via provided reference or merchant reference.
   const ref =
     body.reference ||
     body.merchantReference ||
     query.reference ||
     query.merchantReference;
+
   let payment = null;
   if (ref) {
     payment = await Payment.findOne({ provider_ref: ref });
   }
-  // Fallback: do nothing if we can't resolve; return ok to avoid retries storm
+
   if (!payment)
     return { updated: false, message: "Payment not resolved by reference." };
 
-  // Best-effort: poll current status
   if (payment.pollUrl && payment.pollUrl !== "not available") {
     const result = await pollStatus({ pollUrl: payment.pollUrl });
     return {
@@ -437,7 +524,6 @@ async function handlePaynowWebhook({ query = {}, body = {} }) {
     };
   }
 
-  // Or map status from payload if present
   const statusText = body.status || query.status || "";
   if (statusText) {
     const mapped = /paid/i.test(statusText)
@@ -455,8 +541,8 @@ async function handlePaynowWebhook({ query = {}, body = {} }) {
       : "pending";
 
     payment.paymentStatus = mapped;
-    if (mapped === "paid" && !payment.captured_at)
-      payment.captured_at = new Date();
+    if (mapped === "paid" && !payment.captured_at) payment.captured_at = new Date();
+
     await payment.save();
     return { updated: true, status: mapped, paymentId: payment._id.toString() };
   }
@@ -479,7 +565,9 @@ async function listPayments({ userId, status, page = 1, limit = 20 }) {
   const q = {};
   if (userId) q.user_id = userId;
   if (status) q.paymentStatus = status;
+
   const skip = (Math.max(1, page) - 1) * Math.max(1, limit);
+
   const [items, total] = await Promise.all([
     Payment.find(q)
       .sort({ created_at: -1 })
@@ -487,6 +575,7 @@ async function listPayments({ userId, status, page = 1, limit = 20 }) {
       .limit(Math.max(1, limit)),
     Payment.countDocuments(q),
   ]);
+
   return {
     items,
     total,
