@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 const Payment = require("../models/payment_model");
 const PromoCode = require("../models/promo_code_model");
+const User = require("../models/user_model"); // Add User model import
 
 // Paynow SDK
 const { Paynow } = require("paynow");
@@ -210,7 +211,7 @@ async function initiateRedirectPayment({
 
   const paymentReq = paynow.createPayment(
     reference || `REF-${Date.now()}`,
-    payerEmail || undefined
+    payerEmail || user.email || undefined
   );
   paymentReq.add(lineItem, finalAmount);
 
@@ -278,7 +279,20 @@ async function initiateMobilePayment({
 
   const finalAmount = amt - discount;
 
-  const paymentReq = paynow.createPayment(reference || `REF-${Date.now()}`);
+  // Fetch user with email to ensure we have the email address
+  const userWithEmail = await User.findById(user._id).select("email").lean();
+  if (!userWithEmail || !userWithEmail.email) {
+    const err = new Error(
+      "User email not found. Email is required for mobile payment."
+    );
+    err.status = 400;
+    throw err;
+  }
+
+  const paymentReq = paynow.createPayment(
+    reference || `REF-${Date.now()}`,
+    userWithEmail.email
+  );
   paymentReq.add(lineItem, finalAmount);
 
   const response = await paynow.sendMobile(paymentReq, phone, mobileMethod);
@@ -358,7 +372,8 @@ async function pollStatus({ paymentId, pollUrl }) {
     if (newStatus === "paid" && !payment.captured_at) {
       payment.captured_at = new Date();
     }
-    if (provider_ref && !payment.provider_ref) payment.provider_ref = provider_ref;
+    if (provider_ref && !payment.provider_ref)
+      payment.provider_ref = provider_ref;
     await payment.save();
   }
 
@@ -380,7 +395,10 @@ async function applyPromo({ paymentId, code }) {
     err.status = 404;
     throw err;
   }
-  if (payment.paymentStatus !== "pending" && payment.paymentStatus !== "unpaid") {
+  if (
+    payment.paymentStatus !== "pending" &&
+    payment.paymentStatus !== "unpaid"
+  ) {
     const err = new Error("Cannot apply promo to a non-pending payment.");
     err.status = 409;
     throw err;
@@ -417,7 +435,10 @@ async function removePromo({ paymentId }) {
     err.status = 404;
     throw err;
   }
-  if (payment.paymentStatus !== "pending" && payment.paymentStatus !== "unpaid") {
+  if (
+    payment.paymentStatus !== "pending" &&
+    payment.paymentStatus !== "unpaid"
+  ) {
     const err = new Error("Cannot remove promo from a non-pending payment.");
     err.status = 409;
     throw err;
@@ -541,7 +562,8 @@ async function handlePaynowWebhook({ query = {}, body = {} }) {
       : "pending";
 
     payment.paymentStatus = mapped;
-    if (mapped === "paid" && !payment.captured_at) payment.captured_at = new Date();
+    if (mapped === "paid" && !payment.captured_at)
+      payment.captured_at = new Date();
 
     await payment.save();
     return { updated: true, status: mapped, paymentId: payment._id.toString() };
