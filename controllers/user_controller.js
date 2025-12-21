@@ -18,9 +18,10 @@ function generateToken(user) {
  * POST /api/v1/users/register
  * Registration with OTP
  */
+// controllers/user_controller.js - Update the registerUser function
 async function registerUser(req, res) {
   try {
-    const { full_name, email, phone, password } = req.body;
+    const { full_name, email, phone, password, roles } = req.body;
 
     if (!full_name || !email || !password) {
       return res.status(400).json({
@@ -30,7 +31,6 @@ async function registerUser(req, res) {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -38,11 +38,32 @@ async function registerUser(req, res) {
       });
     }
 
+    // Validate roles if provided
+    if (roles) {
+      const validRoles = ["customer", "agent", "manager", "admin", "driver"];
+      const invalidRoles = roles.filter(role => !validRoles.includes(role));
+      
+      if (invalidRoles.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid roles: ${invalidRoles.join(", ")}. Valid roles are: ${validRoles.join(", ")}`,
+        });
+      }
+
+      if (!Array.isArray(roles) || roles.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Roles must be a non-empty array",
+        });
+      }
+    }
+
     const user = await userService.registerUserWithEmailOtp({
       full_name,
       email,
       phone,
       password,
+      roles, // Pass roles to service
     });
 
     res.status(201).json({
@@ -52,6 +73,7 @@ async function registerUser(req, res) {
         userId: user._id,
         email: user.email,
         status: user.status,
+        roles: user.roles, // Include roles in response
       },
     });
   } catch (error) {

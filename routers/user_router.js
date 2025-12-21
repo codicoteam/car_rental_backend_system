@@ -15,12 +15,12 @@ const {
  *   name: Users
  *   description: User management and authentication
  */
-
+// routers/user_router.js - Update the Swagger docs
 /**
  * @swagger
  * /api/v1/users/register:
  *   post:
- *     summary: Register a new customer user (OTP will be sent to email)
+ *     summary: Register a new user (OTP will be sent to email)
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -45,31 +45,12 @@ const {
  *               password:
  *                 type: string
  *                 example: StrongPassword123!
- *     responses:
- *       201:
- *         description: Registration started, OTP sent
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
+ *               roles:
+ *                 type: array
+ *                 items:
  *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     userId:
- *                       type: string
- *                     email:
- *                       type: string
- *                     status:
- *                       type: string
- *       400:
- *         description: Validation error
- *       500:
- *         description: Server error
+ *                   enum: [customer, agent, manager, admin, driver]
+ *                 example: ["agent"]
  */
 router.post("/register", userController.registerUser);
 
