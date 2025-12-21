@@ -45,7 +45,8 @@ async function createUser({ full_name, email, phone, password, roles }) {
 /**
  * 🔥 Registration with email OTP
  */
-async function registerUserWithEmailOtp({ full_name, email, phone, password }) {
+// services/user_service.js - Update the registerUserWithEmailOtp function
+async function registerUserWithEmailOtp({ full_name, email, phone, password, roles }) {
   const normalizedEmail = email.toLowerCase();
   const existingUser = await User.findOne({ email: normalizedEmail });
 
@@ -56,6 +57,12 @@ async function registerUserWithEmailOtp({ full_name, email, phone, password }) {
 
       existingUser.full_name = full_name;
       existingUser.phone = phone;
+      
+      // Update roles if provided
+      if (roles && roles.length) {
+        existingUser.roles = roles;
+      }
+      
       if (password) {
         existingUser.password_hash = await bcrypt.hash(password, SALT_ROUNDS);
       }
@@ -86,12 +93,15 @@ async function registerUserWithEmailOtp({ full_name, email, phone, password }) {
   const otp = generateOtp();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
+  // Set roles if provided, otherwise use default
+  const userRoles = (roles && roles.length) ? roles : undefined;
+
   const user = new User({
     full_name,
     email: normalizedEmail,
     phone,
     password_hash,
-    roles: undefined,
+    roles: userRoles, // This will use the provided roles or default to ["customer"]
     status: "pending",
     email_verified: false,
     email_verification_otp: otp,
