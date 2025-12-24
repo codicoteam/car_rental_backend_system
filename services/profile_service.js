@@ -181,6 +181,14 @@ async function deleteProfile(profileId) {
   return Profile.findByIdAndDelete(profileId);
 }
 
+/**
+ * Get all profiles for a user (across all roles)
+ */
+async function getProfilesByUserId(userId) {
+  return Profile.find({ user: userId }).sort({ created_at: -1 });
+}
+
+
 module.exports = {
   listProfiles,
   getProfileById,
@@ -191,4 +199,5 @@ module.exports = {
   createManagerProfileByStaff,
   updateProfile,
   deleteProfile,
+  getProfilesByUserId
 };

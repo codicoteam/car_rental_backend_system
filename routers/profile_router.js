@@ -422,4 +422,64 @@ router.delete(
   profileController.deleteProfile
 );
 
+/**
+ * @swagger
+ * /api/v1/profiles/user/{userId}:
+ *   get:
+ *     summary: Get all profiles for a user (all roles)
+ *     description: Returns every profile document for the specified userId (customer/agent/manager/admin). Any authenticated user can access.
+ *     tags: [Profiles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the user whose profiles you want to fetch
+ *         example: "64f1b2c3d4e5f67890123456"
+ *     responses:
+ *       200:
+ *         description: Profiles found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     profiles:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Profile'
+ *                     total:
+ *                       type: integer
+ *                       example: 2
+ *       404:
+ *         description: No profiles found for this user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: No profiles found for this user
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+  "/user/:userId",
+  authMiddleware,
+  profileController.getProfilesByUserId
+);
+
 module.exports = router;
