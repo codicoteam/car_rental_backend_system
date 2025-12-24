@@ -191,13 +191,11 @@ async function getMyProfileByRole(req, res) {
  */
 async function listProfiles(req, res) {
   try {
-    const { role, userId, page, limit } = req.query;
+    const { role, userId } = req.query;
 
     const result = await profileService.listProfiles({
       role,
       userId,
-      page: page ? parseInt(page, 10) : undefined,
-      limit: limit ? parseInt(limit, 10) : undefined,
     });
 
     return res.json({

@@ -5,6 +5,7 @@ const router = express.Router();
 const userController = require("../controllers/user_controller");
 const {
   authMiddleware,
+  requireRoles
 } = require("../middlewares/auth_middleware");
 
 // role helpers
@@ -503,6 +504,62 @@ router.patch(
   "/:id/status",
   authMiddleware,
   userController.updateUserStatus
+);
+
+
+
+
+/**
+ * @swagger
+ * /api/v1/users/admin-create:
+ *   post:
+ *     summary: Admin/Manager — Create a user without OTP (email is verified; no token returned)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [full_name, email]
+ *             properties:
+ *               full_name:
+ *                 type: string
+ *                 example: Jane Doe
+ *               email:
+ *                 type: string
+ *                 example: jane@example.com
+ *               phone:
+ *                 type: string
+ *                 example: "+263771234567"
+ *               password:
+ *                 type: string
+ *                 example: StrongPassword123!   # optional
+ *               roles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum: [customer, agent, manager, admin, driver]
+ *                 example: ["agent"]
+ *     responses:
+ *       201:
+ *         description: User created successfully (no token)
+ *       400:
+ *         description: Validation error / email already in use
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
+router.post(
+  "/admin-create",
+  authMiddleware,
+  requireRoles("admin", "manager"), // ✅ works with your middleware
+  userController.adminCreateUser
 );
 
 /**

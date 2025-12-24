@@ -12,24 +12,16 @@ const User = require("../models/user_model");
 /**
  * Generic: list profiles with filters + pagination
  */
-async function listProfiles({ role, userId, page = 1, limit = 20 } = {}) {
+async function listProfiles({ role, userId } = {}) {
   const filter = {};
   if (role) filter.role = role;
   if (userId) filter.user = userId;
 
-  const skip = (page - 1) * limit;
-
-  const [profiles, total] = await Promise.all([
-    Profile.find(filter).skip(skip).limit(limit).sort({ created_at: -1 }),
-    Profile.countDocuments(filter),
-  ]);
+  const profiles = await Profile.find(filter).sort({ created_at: -1 });
 
   return {
     profiles,
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
+    total: profiles.length,
   };
 }
 
