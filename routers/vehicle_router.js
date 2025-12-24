@@ -118,7 +118,7 @@ router.post(
  * /api/v1/vehicle-models:
  *   get:
  *     summary: List vehicle models
- *     description: Public endpoint. Supports filtering and pagination for search/browse.
+ *     description: Public endpoint. Supports filtering (NO pagination).
  *     tags: [VehicleModels]
  *     parameters:
  *       - in: query
@@ -169,16 +169,6 @@ router.post(
  *         schema:
  *           type: string
  *           enum: [ac, bluetooth, gps, child_seat, 4x4]
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           example: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           example: 20
  *     responses:
  *       200:
  *         description: List of vehicle models
@@ -198,14 +188,9 @@ router.post(
  *                         $ref: '#/components/schemas/VehicleModel'
  *                     total:
  *                       type: integer
- *                     page:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     totalPages:
- *                       type: integer
  */
 router.get("/", vehicleController.listVehicleModels);
+
 
 /**
  * @swagger
