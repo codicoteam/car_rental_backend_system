@@ -31,7 +31,6 @@ const VehicleModelSchema = new Schema(
       type: [
         {
           type: String,
-          enum: FEATURE_SET,
         },
       ],
       default: [],
