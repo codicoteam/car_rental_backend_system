@@ -47,6 +47,7 @@ async function listVehicleModels(req, res) {
   }
 }
 
+
 /**
  * GET /api/vehicle-models/:id
  * Public: get single model

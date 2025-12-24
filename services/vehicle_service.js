@@ -78,26 +78,14 @@ async function createVehicleModel(payload) {
  * List vehicle models with filters + pagination
  */
 async function listVehicleModels(query = {}) {
-  const page = query.page ? Number(query.page) : 1;
-  const limit = query.limit ? Number(query.limit) : 20;
-  const skip = (page - 1) * limit;
-
   const filter = buildVehicleModelFilter(query);
 
-  const [items, total] = await Promise.all([
-    VehicleModel.find(filter)
-      .skip(skip)
-      .limit(limit)
-      .sort({ make: 1, model: 1, year: 1 }),
-    VehicleModel.countDocuments(filter),
-  ]);
+  const items = await VehicleModel.find(filter)
+    .sort({ make: 1, model: 1, year: 1 });
 
   return {
     items,
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
+    total: items.length,
   };
 }
 
