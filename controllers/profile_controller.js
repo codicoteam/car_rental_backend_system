@@ -321,6 +321,43 @@ async function deleteProfile(req, res) {
   }
 }
 
+/**
+ * GET /api/profiles/user/:userId
+ * Get ALL profiles for a specific user (not role specific).
+ * Access: any authenticated user.
+ */
+async function getProfilesByUserId(req, res) {
+  try {
+    const { userId } = req.params;
+
+    const profiles = await profileService.getProfilesByUserId(userId);
+
+    // Optional: return 404 if none
+    if (!profiles || profiles.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No profiles found for this user",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        profiles,
+        total: profiles.length,
+      },
+    });
+  } catch (error) {
+    console.error("getProfilesByUserId error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch profiles",
+    });
+  }
+}
+
+
+
 module.exports = {
   createSelfProfile,
   createCustomerByStaff,
@@ -331,4 +368,5 @@ module.exports = {
   getProfileById,
   updateProfile,
   deleteProfile,
+  getProfilesByUserId
 };
