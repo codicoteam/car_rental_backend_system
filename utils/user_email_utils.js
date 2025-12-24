@@ -29,9 +29,9 @@ function generateEmailTemplate({ title, message, otpCode = null }) {
           
           <!-- Official Header -->
           <tr>
-            <td style="background-color: #1a365d; padding: 30px 40px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">MAvHU PROJECT</h1>
-              <p style="color: #cbd5e0; margin: 10px 0 0 0; font-size: 14px;">Health & Medical Research Initiative</p>
+            <td style="background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%); padding: 30px 40px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: bold; letter-spacing: 1px;">Mo Rental</h1>
+              <p style="color: #e0f2fe; margin: 10px 0 0 0; font-size: 14px;">Premium Car Rental Services</p>
             </td>
           </tr>
           
@@ -40,12 +40,12 @@ function generateEmailTemplate({ title, message, otpCode = null }) {
             <td style="padding: 40px 40px 30px 40px;">
               
               <!-- Title -->
-              <h2 style="color: #2d3748; margin: 0 0 25px 0; font-size: 20px; font-weight: bold; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+              <h2 style="color: #1e3a8a; margin: 0 0 25px 0; font-size: 20px; font-weight: bold; border-bottom: 2px solid #0891b2; padding-bottom: 10px;">
                 ${title}
               </h2>
               
               <!-- Message -->
-              <div style="color: #4a5568; font-size: 15px; line-height: 1.6;">
+              <div style="color: #334155; font-size: 15px; line-height: 1.6;">
                 ${message}
               </div>
               
@@ -56,13 +56,13 @@ function generateEmailTemplate({ title, message, otpCode = null }) {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                 <tr>
                   <td>
-                    <p style="color: #718096; font-size: 14px; margin: 0 0 10px 0;">Verification Code:</p>
-                    <div style="background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 20px; text-align: center;">
-                      <p style="color: #2d3748; font-size: 28px; font-weight: bold; letter-spacing: 5px; margin: 0; font-family: 'Courier New', monospace;">
+                    <p style="color: #64748b; font-size: 14px; margin: 0 0 10px 0;">Verification Code:</p>
+                    <div style="background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); border: 2px solid #0891b2; border-radius: 8px; padding: 20px; text-align: center;">
+                      <p style="color: #1e3a8a; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 0; font-family: 'Courier New', monospace;">
                         ${otpCode}
                       </p>
                     </div>
-                    <p style="color: #718096; font-size: 12px; margin: 10px 0 0 0; font-style: italic;">
+                    <p style="color: #64748b; font-size: 12px; margin: 10px 0 0 0; font-style: italic;">
                       This code expires in 15 minutes. Do not share with anyone.
                     </p>
                   </td>
@@ -81,9 +81,9 @@ function generateEmailTemplate({ title, message, otpCode = null }) {
               ? `
           <tr>
             <td style="padding: 0 40px 30px 40px;">
-              <div style="background-color: #fffaf0; border-left: 4px solid #ed8936; padding: 15px;">
-                <p style="color: #744210; font-size: 13px; margin: 0; font-weight: bold;">ACTION REQUIRED</p>
-                <p style="color: #975a16; font-size: 12px; margin: 5px 0 0 0;">
+              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px;">
+                <p style="color: #92400e; font-size: 13px; margin: 0; font-weight: bold;">ACTION REQUIRED</p>
+                <p style="color: #b45309; font-size: 12px; margin: 5px 0 0 0;">
                   Please use the verification code above to complete your requested action.
                 </p>
               </div>
@@ -95,24 +95,24 @@ function generateEmailTemplate({ title, message, otpCode = null }) {
           
           <!-- Official Footer -->
           <tr>
-            <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0;">
+            <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #cbd5e1;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding: 0 0 15px 0; border-bottom: 1px solid #e2e8f0;">
-                    <p style="color: #4a5568; font-size: 14px; margin: 0 0 10px 0; font-weight: bold;">
-                      MAvHU Project
+                  <td style="padding: 0 0 15px 0; border-bottom: 1px solid #cbd5e1;">
+                    <p style="color: #1e3a8a; font-size: 14px; margin: 0 0 10px 0; font-weight: bold;">
+                      Mo Rental App
                     </p>
-                    <p style="color: #718096; font-size: 12px; margin: 0; line-height: 1.5;">
-                      Health Research Initiative • Data Protection & Privacy Compliant
+                    <p style="color: #64748b; font-size: 12px; margin: 0; line-height: 1.5;">
+                      Premium Car Rental Services • Secure & Reliable
                     </p>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 15px 0 0 0;">
-                    <p style="color: #a0aec0; font-size: 11px; margin: 0; line-height: 1.4;">
-                      This is an automated message from the MAvHU Project system.<br>
-                      Please do not reply to this email. For assistance, contact the project administrator.<br>
-                      © ${new Date().getFullYear()} MAvHU Project. All communications are confidential.
+                    <p style="color: #94a3b8; font-size: 11px; margin: 0; line-height: 1.4;">
+                      This is an automated message from Mo Rental App.<br>
+                      Please do not reply to this email. For assistance, contact our customer support team.<br>
+                      © ${new Date().getFullYear()} Mo Rental App. All rights reserved.
                     </p>
                   </td>
                 </tr>
@@ -133,18 +133,18 @@ function generateEmailTemplate({ title, message, otpCode = null }) {
  * Send verification email for new user registration
  */
 async function sendVerificationEmail({ to, fullName, otp }) {
-  const subject = "Account Verification - MAvHU Project";
+  const subject = "Account Verification - Mo Rental App";
   const title = "Account Verification Required";
   const message = `
     <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
     <p style="margin: 0 0 15px 0;">
-      Welcome to the MAvHU Project. Your account registration has been received and requires verification.
+      Welcome to Mo Rental App. Your account registration has been received and requires verification.
     </p>
     <p style="margin: 0 0 15px 0;">
-      To activate your account and access the research portal, please verify your email address using the verification code provided below.
+      To activate your account and start browsing our premium car rental services, please verify your email address using the verification code provided below.
     </p>
     <p style="margin: 0;">
-      Upon verification, you will gain access to project documents, research data, and collaboration tools as per your assigned permissions.
+      Upon verification, you will gain access to our fleet of vehicles, booking system, and exclusive rental offers.
     </p>
   `;
 
@@ -161,18 +161,18 @@ async function sendVerificationEmail({ to, fullName, otp }) {
  * Send account deletion confirmation email
  */
 async function sendDeleteAccountEmail({ to, fullName, otp }) {
-  const subject = "Account Deletion Request - MAvHU Project";
+  const subject = "Account Deletion Request - Mo Rental App";
   const title = "Account Deletion Confirmation";
   const message = `
     <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
     <p style="margin: 0 0 15px 0;">
-      We have received a request to permanently delete your MAvHU Project account and all associated data.
+      We have received a request to permanently delete your Mo Rental App account and all associated data.
     </p>
     <p style="margin: 0 0 15px 0;">
-      <strong>Important:</strong> This action will remove your access to all project resources, research data, and communication channels. All your contributions will be anonymized in accordance with our data retention policy.
+      <strong>Important:</strong> This action will remove your access to all rental services, booking history, and loyalty rewards. All your personal information will be permanently deleted in accordance with our data retention policy.
     </p>
     <p style="margin: 0;">
-      To proceed with account deletion, please confirm this action using the verification code below. If you did not initiate this request, please disregard this email and immediately contact the project administrator.
+      To proceed with account deletion, please confirm this action using the verification code below. If you did not initiate this request, please disregard this email and immediately contact our customer support team.
     </p>
   `;
 
@@ -189,18 +189,18 @@ async function sendDeleteAccountEmail({ to, fullName, otp }) {
  * Send password reset email
  */
 async function sendPasswordResetEmail({ to, fullName, otp }) {
-  const subject = "Password Reset - MAvHU Project";
+  const subject = "Password Reset - Mo Rental App";
   const title = "Password Reset Request";
   const message = `
     <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
     <p style="margin: 0 0 15px 0;">
-      A password reset request has been initiated for your MAvHU Project account.
+      A password reset request has been initiated for your Mo Rental App account.
     </p>
     <p style="margin: 0 0 15px 0;">
-      To reset your password and regain access to the research portal, please use the verification code provided below.
+      To reset your password and regain access to our rental services, please use the verification code provided below.
     </p>
     <p style="margin: 0;">
-      If you did not request a password reset, please ignore this email or contact the project security team immediately.
+      If you did not request a password reset, please ignore this email or contact our security team immediately.
     </p>
   `;
 
@@ -233,19 +233,19 @@ function generateDocumentTemplate({ title, message, details = null }) {
           
           <!-- Official Letterhead -->
           <tr>
-            <td style="border-bottom: 3px solid #1a365d; padding: 30px 40px;">
+            <td style="border-bottom: 3px solid #0891b2; padding: 30px 40px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <h1 style="color: #1a365d; margin: 0; font-size: 22px; font-weight: bold; letter-spacing: 1px;">
-                      MAvHU PROJECT
+                    <h1 style="color: #1e3a8a; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 1px;">
+                      Mo Rental App
                     </h1>
-                    <p style="color: #4a5568; margin: 5px 0 0 0; font-size: 13px;">
+                    <p style="color: #334155; margin: 5px 0 0 0; font-size: 13px;">
                       OFFICIAL COMMUNICATION
                     </p>
                   </td>
                   <td align="right" style="vertical-align: top;">
-                    <p style="color: #718096; margin: 0; font-size: 11px;">
+                    <p style="color: #64748b; margin: 0; font-size: 11px;">
                       ${new Date().toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
@@ -263,12 +263,12 @@ function generateDocumentTemplate({ title, message, details = null }) {
             <td style="padding: 35px 40px 25px 40px;">
               
               <!-- Document Title -->
-              <h2 style="color: #2d3748; margin: 0 0 25px 0; font-size: 18px; font-weight: bold;">
+              <h2 style="color: #1e3a8a; margin: 0 0 25px 0; font-size: 18px; font-weight: bold;">
                 ${title}
               </h2>
               
               <!-- Main Content -->
-              <div style="color: #4a5568; font-size: 14px; line-height: 1.7;">
+              <div style="color: #334155; font-size: 14px; line-height: 1.7;">
                 ${message}
               </div>
               
@@ -280,16 +280,16 @@ function generateDocumentTemplate({ title, message, details = null }) {
           
           <!-- Signature/Authority Section -->
           <tr>
-            <td style="padding: 25px 40px 30px 40px; border-top: 1px solid #e2e8f0;">
+            <td style="padding: 25px 40px 30px 40px; border-top: 1px solid #cbd5e1;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <p style="color: #4a5568; font-size: 12px; margin: 0 0 5px 0; font-weight: bold;">
-                      MAvHU Project Administration
+                    <p style="color: #334155; font-size: 12px; margin: 0 0 5px 0; font-weight: bold;">
+                      Mo Rental App Customer Service
                     </p>
-                    <p style="color: #718096; font-size: 11px; margin: 0; line-height: 1.5;">
-                      Health Research Coordination • Data Management • Project Oversight<br>
-                      This communication is generated and authorized by the MAvHU Project system.
+                    <p style="color: #64748b; font-size: 11px; margin: 0; line-height: 1.5;">
+                      Premium Car Rentals • Customer Support • Account Management<br>
+                      This communication is generated and authorized by Mo Rental App.
                     </p>
                   </td>
                 </tr>
@@ -299,11 +299,11 @@ function generateDocumentTemplate({ title, message, details = null }) {
           
           <!-- Confidential Footer -->
           <tr>
-            <td style="background-color: #1a365d; padding: 20px 40px;">
-              <p style="color: #cbd5e0; font-size: 10px; margin: 0; text-align: center; line-height: 1.4;">
+            <td style="background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%); padding: 20px 40px;">
+              <p style="color: #e0f2fe; font-size: 10px; margin: 0; text-align: center; line-height: 1.4;">
                 CONFIDENTIAL: This email and any attachments contain information which is confidential and may be privileged.<br>
                 It is intended for the named recipient(s) only. If you are not the intended recipient, please notify the sender immediately.<br>
-                Unauthorized use, disclosure, copying, or distribution is prohibited. © MAvHU Project.
+                Unauthorized use, disclosure, copying, or distribution is prohibited. © Mo Rental App.
               </p>
             </td>
           </tr>
@@ -318,10 +318,10 @@ function generateDocumentTemplate({ title, message, details = null }) {
 }
 
 /**
- * Send project notification email
+ * Send booking notification email
  */
-async function sendProjectNotificationEmail({ to, fullName, notification }) {
-  const subject = `Project Notification: ${notification.subject}`;
+async function sendBookingNotificationEmail({ to, fullName, notification }) {
+  const subject = `Booking Notification: ${notification.subject}`;
   const title = notification.subject;
 
   const message = `
@@ -335,24 +335,24 @@ async function sendProjectNotificationEmail({ to, fullName, notification }) {
         : ""
     }
     <p style="margin: 0;">
-      This notification is part of the MAvHU Project's communication protocol. Please take appropriate action as required.
+      Thank you for choosing Mo Rental App. We're committed to providing you with excellent car rental service.
     </p>
   `;
 
   let detailsHtml = "";
   if (notification.metadata) {
     detailsHtml = `
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0; background-color: #f8fafc; border: 1px solid #e2e8f0;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
         <tr>
           <td style="padding: 15px;">
-            <p style="color: #4a5568; font-size: 12px; margin: 0 0 10px 0; font-weight: bold;">
-              ADDITIONAL INFORMATION:
+            <p style="color: #1e3a8a; font-size: 12px; margin: 0 0 10px 0; font-weight: bold;">
+              BOOKING DETAILS:
             </p>
             ${Object.entries(notification.metadata)
               .map(
                 ([key, value]) => `
-              <p style="color: #718096; font-size: 12px; margin: 0 0 5px 0;">
-                <span style="font-weight: bold;">${key}:</span> ${value}
+              <p style="color: #64748b; font-size: 12px; margin: 0 0 5px 0;">
+                <span style="font-weight: bold; color: #334155;">${key}:</span> ${value}
               </p>
             `
               )
@@ -373,45 +373,45 @@ async function sendProjectNotificationEmail({ to, fullName, notification }) {
 }
 
 /**
- * Send data submission confirmation
+ * Send rental confirmation email
  */
-async function sendDataSubmissionEmail({ to, fullName, submission }) {
-  const subject = `Data Submission Received - ${submission.reference}`;
-  const title = "Data Submission Acknowledgement";
+async function sendRentalConfirmationEmail({ to, fullName, rental }) {
+  const subject = `Rental Confirmation - ${rental.reference}`;
+  const title = "Rental Booking Confirmed";
 
   const message = `
     <p style="margin: 0 0 15px 0;">Dear ${fullName},</p>
     <p style="margin: 0 0 15px 0;">
-      This email confirms that the MAvHU Project has received your data submission.
+      This email confirms that Mo Rental App has received and processed your car rental booking.
     </p>
     <p style="margin: 0;">
-      Your contribution has been logged and will undergo the standard verification process. You will be notified once the data has been processed and integrated into the research database.
+      Your vehicle is reserved and will be ready for pickup at the scheduled date and time. Please bring a valid driver's license and payment method to complete the rental process.
     </p>
   `;
 
   const detailsHtml = `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0; background-color: #f8fafc; border: 1px solid #e2e8f0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
       <tr>
         <td style="padding: 15px;">
-          <p style="color: #4a5568; font-size: 12px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">
-            SUBMISSION DETAILS
+          <p style="color: #1e3a8a; font-size: 12px; margin: 0 0 15px 0; font-weight: bold; border-bottom: 2px solid #0891b2; padding-bottom: 5px;">
+            RENTAL DETAILS
           </p>
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="padding: 5px 0; color: #718096; font-size: 12px; width: 150px;">Reference ID:</td>
-              <td style="padding: 5px 0; color: #4a5568; font-size: 12px; font-weight: bold;">${submission.reference}</td>
+              <td style="padding: 5px 0; color: #64748b; font-size: 12px; width: 150px;">Booking Reference:</td>
+              <td style="padding: 5px 0; color: #1e3a8a; font-size: 12px; font-weight: bold;">${rental.reference}</td>
             </tr>
             <tr>
-              <td style="padding: 5px 0; color: #718096; font-size: 12px;">Submission Date:</td>
-              <td style="padding: 5px 0; color: #4a5568; font-size: 12px;">${submission.date}</td>
+              <td style="padding: 5px 0; color: #64748b; font-size: 12px;">Booking Date:</td>
+              <td style="padding: 5px 0; color: #334155; font-size: 12px;">${rental.date}</td>
             </tr>
             <tr>
-              <td style="padding: 5px 0; color: #718096; font-size: 12px;">Type:</td>
-              <td style="padding: 5px 0; color: #4a5568; font-size: 12px;">${submission.type}</td>
+              <td style="padding: 5px 0; color: #64748b; font-size: 12px;">Vehicle Type:</td>
+              <td style="padding: 5px 0; color: #334155; font-size: 12px;">${rental.type}</td>
             </tr>
             <tr>
-              <td style="padding: 5px 0; color: #718096; font-size: 12px;">Status:</td>
-              <td style="padding: 5px 0; color: #4a5568; font-size: 12px;">RECEIVED</td>
+              <td style="padding: 5px 0; color: #64748b; font-size: 12px;">Status:</td>
+              <td style="padding: 5px 0; color: #0891b2; font-size: 12px; font-weight: bold;">CONFIRMED</td>
             </tr>
           </table>
         </td>
@@ -433,7 +433,7 @@ async function sendDataSubmissionEmail({ to, fullName, submission }) {
  */
 async function sendEmail({ to, subject, text, html }) {
   const mailOptions = {
-    from: `MAvHU Project <${process.env.EMAIL_USER}>`,
+    from: `Mo Rental App <${process.env.EMAIL_USER}>`,
     to,
     subject,
     text: text || subject,
@@ -449,13 +449,57 @@ async function sendEmail({ to, subject, text, html }) {
   }
 }
 
+
+async function sendAdminCreatedAccountEmail({
+  to,
+  fullName,
+  webLoginUrl = process.env.WEB_LOGIN_URL,
+  playStoreUrl = process.env.PLAYSTORE_URL,
+}) {
+  const subject = "Your Mo Rental account has been created";
+  const title = "Welcome to Mo Rental — Your account is ready";
+
+  const message = `
+    <p style="margin:0 0 15px 0;">Dear ${fullName},</p>
+    <p style="margin:0 0 15px 0;">
+      An account has been created for you on <strong>Mo Rental</strong> by our staff.
+    </p>
+    <p style="margin:0 0 15px 0;">
+      You can sign in using the email that received this message.
+      If you don't have a password yet, simply choose <em>Forgot password</em> on the sign-in page to set one securely.
+    </p>
+    <p style="margin:0 0 15px 0;">
+      <a href="${webLoginUrl}" style="display:inline-block;padding:10px 16px;border-radius:8px;border:1px solid #0891b2;text-decoration:none;">
+        Sign in to Mo Rental
+      </a>
+    </p>
+    <p style="margin:0 0 15px 0;">Or get the app on Google Play:</p>
+    <p style="margin:0;">
+      <a href="${playStoreUrl}" style="display:inline-block;padding:10px 16px;border-radius:8px;border:1px solid #1e3a8a;text-decoration:none;">
+        Open on Google Play
+      </a>
+    </p>
+  `;
+
+  const html = generateDocumentTemplate({
+    title,
+    message,
+    details: "",
+  });
+
+  await sendEmail({ to, subject, html });
+}
+
+
+
 module.exports = {
   sendEmail,
   sendVerificationEmail,
   sendDeleteAccountEmail,
   sendPasswordResetEmail,
-  sendProjectNotificationEmail,
-  sendDataSubmissionEmail,
+  sendBookingNotificationEmail,
+  sendRentalConfirmationEmail,
   generateEmailTemplate,
   generateDocumentTemplate,
+  sendAdminCreatedAccountEmail
 };

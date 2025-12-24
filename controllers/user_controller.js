@@ -491,6 +491,77 @@ async function forgotPasswordReset(req, res) {
   }
 }
 
+
+async function adminCreateUser(req, res) {
+  try {
+    const { full_name, email, phone, password, roles } = req.body;
+
+    if (!full_name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "full_name and email are required",
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format. Please enter a valid email address.",
+      });
+    }
+
+    // Validate roles if provided (same as your register validation)
+    if (roles) {
+      const validRoles = ["customer", "agent", "manager", "admin", "driver"];
+      if (!Array.isArray(roles) || roles.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Roles must be a non-empty array",
+        });
+      }
+      const invalidRoles = roles.filter((r) => !validRoles.includes(r));
+      if (invalidRoles.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid roles: ${invalidRoles.join(
+            ", "
+          )}. Valid roles are: ${validRoles.join(", ")}`,
+        });
+      }
+    }
+
+    const user = await userService.adminCreateUser({
+      full_name,
+      email,
+      phone,
+      password, // optional
+      roles, // optional
+    });
+
+    // no token
+    res.status(201).json({
+      success: true,
+      message:
+        "User created successfully. A notification email has been sent to the user.",
+      data: {
+        userId: user._id,
+        email: user.email,
+        status: user.status,
+        roles: user.roles,
+        email_verified: user.email_verified,
+      },
+    });
+  } catch (error) {
+    if (!error.statusCode) console.error(error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to create user",
+    });
+  }
+}
+
+
 module.exports = {
   registerUser,
   verifyEmail,
@@ -506,4 +577,5 @@ module.exports = {
   confirmDeleteAccount,
   forgotPasswordRequest,
   forgotPasswordReset,
+  adminCreateUser
 };

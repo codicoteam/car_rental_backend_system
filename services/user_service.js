@@ -424,6 +424,66 @@ async function deleteUser(userId) {
   return User.findByIdAndDelete(userId);
 }
 
+
+
+async function adminCreateUser({ full_name, email, phone, password, roles }) {
+  const normalizedEmail = email.toLowerCase();
+
+  // fail fast if email exists
+  const existingUser = await User.findOne({ email: normalizedEmail });
+  if (existingUser) {
+    const error = new Error("Email already in use");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  let password_hash = undefined;
+  if (password) {
+    password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+  }
+
+  const user = new User({
+    full_name,
+    email: normalizedEmail,
+    phone,
+    password_hash,
+    roles: roles && roles.length ? roles : undefined, // will default to ["customer"] per schema
+    status: "active",
+    email_verified: true,
+    email_verification_otp: undefined,
+    email_verification_expires_at: undefined,
+  });
+
+  try {
+    await user.save();
+  } catch (err) {
+    // Handle duplicate key gracefully (email/phone)
+    if (err && err.code === 11000) {
+      const fields = Object.keys(err.keyPattern || {});
+      const error = new Error(
+        `Duplicate ${fields.length ? fields.join(", ") : "key"}`
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+    throw err;
+  }
+
+  // Send notification email (no OTP)
+  try {
+    await emailService.sendAdminCreatedAccountEmail({
+      to: user.email,
+      fullName: user.full_name,
+      // URLs pulled from env inside the email helper
+    });
+  } catch (mailErr) {
+    // Don't fail user creation if email sending fails, but surface a 207-like note if you want
+    console.error("Failed to send admin-created account email:", mailErr);
+  }
+
+  return user;
+}
+
 module.exports = {
   createUser,
   registerUserWithEmailOtp,
@@ -441,4 +501,5 @@ module.exports = {
   verifyDeleteAccountOtpAndDelete,
   requestPasswordResetOtp,
   resetPasswordWithOtp,
+  adminCreateUser
 };

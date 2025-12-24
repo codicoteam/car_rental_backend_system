@@ -319,16 +319,6 @@ router.get("/me/:role", authMiddleware, profileController.getMyProfileByRole);
  *         name: userId
  *         schema:
  *           type: string
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           example: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           example: 20
  *     responses:
  *       200:
  *         description: List of profiles
