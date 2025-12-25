@@ -59,30 +59,15 @@ async function createRatePlan(payload) {
  * List rate plans (no hard pagination enforced; optional page/limit)
  */
 async function listRatePlans(query = {}) {
-  const page = query.page ? Number(query.page) : 1;
-  const limit = query.limit ? Number(query.limit) : 50;
-  const skip = (page - 1) * limit;
-
   const filter = buildRatePlanFilter(query);
 
-  const [items, total] = await Promise.all([
-    RatePlan.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate("branch_id", "name")
-      .populate("vehicle_model_id")
-      .populate("vehicle_id"),
-    RatePlan.countDocuments(filter),
-  ]);
+  const items = await RatePlan.find(filter)
+    .sort({ createdAt: -1 })
+    .populate("branch_id", "name")
+    .populate("vehicle_model_id")
+    .populate("vehicle_id");
 
-  return {
-    items,
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
-  };
+  return items;
 }
 
 /**
