@@ -88,30 +88,19 @@ async function createVehicle(payload) {
  * This is guest-friendly (no auth required)
  */
 async function listVehicles(query = {}) {
-  const page = query.page ? Number(query.page) : 1;
-  const limit = query.limit ? Number(query.limit) : 20;
-  const skip = (page - 1) * limit;
-
   const filter = buildVehicleFilter(query);
 
-  const [items, total] = await Promise.all([
-    Vehicle.find(filter)
-      .skip(skip)
-      .limit(limit)
-      .sort({ created_at: -1 })
-      .populate("vehicle_model_id") // helpful for UI
-      .populate("branch_id"),
-    Vehicle.countDocuments(filter),
-  ]);
+  const items = await Vehicle.find(filter)
+    .sort({ created_at: -1 })
+    .populate("vehicle_model_id")
+    .populate("branch_id");
 
   return {
     items,
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
+    total: items.length,
   };
 }
+
 
 /**
  * Get a single vehicle by ID
