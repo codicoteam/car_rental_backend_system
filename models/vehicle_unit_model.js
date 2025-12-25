@@ -10,7 +10,6 @@ const MetadataSchema = new Schema(
     doors: { type: Number, min: 2, max: 6 },
     features: {
       type: [String],
-      enum: ["ac", "bluetooth", "gps", "child_seat", "4x4"],
     },
   },
   { _id: false }
