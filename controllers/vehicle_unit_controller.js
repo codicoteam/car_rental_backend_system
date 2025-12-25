@@ -27,7 +27,7 @@ async function createVehicle(req, res) {
 
 /**
  * GET /api/vehicles
- * Public: list vehicles with filters + pagination
+ * Public: list vehicles with filters (no pagination)
  */
 async function listVehicles(req, res) {
   try {
@@ -46,6 +46,7 @@ async function listVehicles(req, res) {
     });
   }
 }
+
 
 /**
  * GET /api/vehicles/:id

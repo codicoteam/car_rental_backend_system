@@ -110,7 +110,7 @@ router.post(
  * /api/v1/vehicles:
  *   get:
  *     summary: List vehicles (guest-friendly)
- *     description: Public endpoint to list/ search vehicles in the fleet.
+ *     description: Public endpoint to list/search vehicles in the fleet (no pagination).
  *     tags: [Vehicles]
  *     parameters:
  *       - in: query
@@ -147,16 +147,6 @@ router.post(
  *         name: odometer_max
  *         schema:
  *           type: number
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           example: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           example: 20
  *     responses:
  *       200:
  *         description: List of vehicles
