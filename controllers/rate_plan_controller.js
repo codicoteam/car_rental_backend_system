@@ -52,7 +52,7 @@ async function listRatePlans(req, res) {
   try {
     const { user } = req;
 
-    // you might want to restrict listing to staff only
+    // Optional role restriction
     // if (!isPricingStaff(user)) {
     //   return res.status(403).json({
     //     success: false,
@@ -76,6 +76,7 @@ async function listRatePlans(req, res) {
     });
   }
 }
+
 
 /**
  * GET /api/rate-plans/:id

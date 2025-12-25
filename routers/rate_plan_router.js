@@ -191,15 +191,7 @@ router.post(
  *         schema:
  *           type: string
  *           format: date-time
- *         description: "Filter plans valid on this date."
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
+ *         description: Filter plans valid on this date.
  *     responses:
  *       200:
  *         description: List of rate plans
@@ -210,7 +202,7 @@ router.post(
  */
 router.get(
   "/",
-  authMiddleware, 
+  authMiddleware,
   ratePlanController.listRatePlans
 );
 
