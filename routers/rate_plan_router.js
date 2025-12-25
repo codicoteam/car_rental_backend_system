@@ -4,10 +4,7 @@ const router = express.Router();
 
 const ratePlanController = require("../controllers/rate_plan_controller");
 const {
-  authMiddleware,
-  requireRoles,
-  customerMiddleware,
-  agentMiddleware,
+  authMiddleware
 } = require("../middlewares/auth_middleware");
 
 
@@ -229,7 +226,7 @@ router.get(
  */
 router.get(
   "/:id",
-  authMiddleware, customerMiddleware, agentMiddleware,
+  authMiddleware, 
   ratePlanController.getRatePlanById
 );
 
@@ -267,7 +264,7 @@ router.get(
  */
 router.patch(
   "/:id",
-  authMiddleware, customerMiddleware, agentMiddleware,
+  authMiddleware,
   ratePlanController.updateRatePlan
 );
 
@@ -298,7 +295,7 @@ router.patch(
  */
 router.delete(
   "/:id",
-  authMiddleware, customerMiddleware, agentMiddleware,
+  authMiddleware,
   ratePlanController.deleteRatePlan
 );
 
@@ -337,7 +334,7 @@ router.delete(
  */
 router.get(
   "/by-vehicle/:vehicleId",
-  authMiddleware, customerMiddleware, agentMiddleware,
+  authMiddleware, 
   ratePlanController.getRatePlansByVehicle
 );
 
@@ -376,7 +373,7 @@ router.get(
  */
 router.get(
   "/by-model/:vehicleModelId",
-  authMiddleware, customerMiddleware, agentMiddleware,
+  authMiddleware, 
   ratePlanController.getRatePlansByModel
 );
 
@@ -416,7 +413,7 @@ router.get(
  */
 router.get(
   "/by-class/:vehicleClass",
-  authMiddleware, customerMiddleware, agentMiddleware,
+  authMiddleware,
   ratePlanController.getRatePlansByClass
 );
 
