@@ -217,14 +217,14 @@ router.get(
 
 // Get by ID (read-only)
 router.get(
-  "/service-schedules/:id",
+  "/:id",
   authMiddleware,
   serviceScheduleController.getServiceScheduleById
 );
 
 // Update (admin + manager)
 router.put(
-  "/service-schedules/:id",
+  "/:id",
   authMiddleware,
   requireRoles("admin", "manager"),
   serviceScheduleController.updateServiceSchedule
@@ -232,9 +232,8 @@ router.put(
 
 // Delete (admin + manager)
 router.delete(
-  "/service-schedules/:id",
+  "/:id",
   authMiddleware,
-  requireRoles("admin", "manager"),
   serviceScheduleController.deleteServiceSchedule
 );
 
