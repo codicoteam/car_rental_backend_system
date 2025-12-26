@@ -47,10 +47,20 @@ async function listServiceSchedules({ vehicle_id, vehicle_model_id }) {
     query.vehicle_model_id = vehicle_model_id;
   }
 
-  const items = await ServiceSchedule.find(query).sort({ created_at: -1 });
+  const items = await ServiceSchedule.find(query)
+    .sort({ created_at: -1 })
+    .populate({
+      path: "vehicle_id",
+      // select: "registration_number make year", // optional
+    })
+    .populate({
+      path: "vehicle_model_id",
+      // select: "name brand", // optional
+    });
 
   return items;
 }
+
 
 async function getSchedulesByVehicle(vehicleId, { page = 1, limit = 20 }) {
   assertObjectId(vehicleId, "vehicle_id");
