@@ -130,6 +130,7 @@ async function updateServiceSchedule(req, res) {
 async function deleteServiceSchedule(req, res) {
   try {
     const { id } = req.params;
+    console.log("Deleting service schedule with id:", id);
     await serviceScheduleService.deleteServiceSchedule(id);
 
     return res.status(204).send();
