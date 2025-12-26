@@ -47,24 +47,22 @@ async function getServiceScheduleById(req, res) {
 // GET /service-schedules
 async function getServiceSchedules(req, res) {
   try {
-    const { vehicle_id, vehicle_model_id, page, limit } = req.query;
+    const { vehicle_id, vehicle_model_id } = req.query;
 
-    const result = await serviceScheduleService.listServiceSchedules({
+    const items = await serviceScheduleService.listServiceSchedules({
       vehicle_id,
       vehicle_model_id,
-      page,
-      limit,
     });
 
     return res.status(200).json({
       success: true,
-      data: result.items,
-      pagination: result.pagination,
+      data: items,
     });
   } catch (error) {
     return handleError(res, error);
   }
 }
+
 
 // GET /vehicles/:vehicleId/service-schedules
 async function getSchedulesByVehicle(req, res) {
