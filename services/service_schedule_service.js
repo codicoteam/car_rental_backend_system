@@ -34,12 +34,7 @@ async function getServiceScheduleById(id) {
   return doc;
 }
 
-async function listServiceSchedules({
-  vehicle_id,
-  vehicle_model_id,
-  page = 1,
-  limit = 20,
-}) {
+async function listServiceSchedules({ vehicle_id, vehicle_model_id }) {
   const query = {};
 
   if (vehicle_id) {
@@ -52,25 +47,9 @@ async function listServiceSchedules({
     query.vehicle_model_id = vehicle_model_id;
   }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const items = await ServiceSchedule.find(query).sort({ created_at: -1 });
 
-  const [items, total] = await Promise.all([
-    ServiceSchedule.find(query)
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(Number(limit)),
-    ServiceSchedule.countDocuments(query),
-  ]);
-
-  return {
-    items,
-    pagination: {
-      total,
-      page: Number(page),
-      limit: Number(limit),
-      pages: Math.ceil(total / limit),
-    },
-  };
+  return items;
 }
 
 async function getSchedulesByVehicle(vehicleId, { page = 1, limit = 20 }) {
