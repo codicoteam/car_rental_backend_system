@@ -42,6 +42,7 @@ const {
  *       500:
  *         description: Internal server error
  *
+ *
  *   get:
  *     summary: List all service orders (all roles read-only)
  *     tags: [ServiceOrders]
@@ -63,13 +64,15 @@ const {
  *           type: string
  *           enum: [scheduled_service, repair, tyre_change, inspection]
  *       - in: query
- *         name: page
+ *         name: created_from
  *         schema:
- *           type: number
+ *           type: string
+ *           format: date-time
  *       - in: query
- *         name: limit
+ *         name: created_to
  *         schema:
- *           type: number
+ *           type: string
+ *           format: date-time
  *     responses:
  *       200:
  *         description: List fetched successfully
@@ -78,7 +81,6 @@ const {
  *       500:
  *         description: Internal server error
  */
-
 // Create (Admin + Manager only)
 router.post(
   "/",

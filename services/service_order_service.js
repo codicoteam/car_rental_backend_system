@@ -48,8 +48,6 @@ async function listServiceOrders({
   type,
   created_from,
   created_to,
-  page = 1,
-  limit = 20,
 }) {
   const query = {};
 
@@ -67,26 +65,11 @@ async function listServiceOrders({
     if (created_to) query.created_at.$lte = new Date(created_to);
   }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const items = await ServiceOrder.find(query).sort({ created_at: -1 });
 
-  const [items, total] = await Promise.all([
-    ServiceOrder.find(query)
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(Number(limit)),
-    ServiceOrder.countDocuments(query),
-  ]);
-
-  return {
-    items,
-    pagination: {
-      total,
-      page: Number(page),
-      limit: Number(limit),
-      pages: Math.ceil(total / limit),
-    },
-  };
+  return items;
 }
+
 
 /**
  * Get all service orders for a given vehicle
