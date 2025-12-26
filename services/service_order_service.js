@@ -65,11 +65,15 @@ async function listServiceOrders({
     if (created_to) query.created_at.$lte = new Date(created_to);
   }
 
-  const items = await ServiceOrder.find(query).sort({ created_at: -1 });
+  const items = await ServiceOrder.find(query)
+    .sort({ created_at: -1 })
+    .populate({
+      path: "vehicle_id",
+      // select: "registration_number make model year", // optional
+    });
 
   return items;
 }
-
 
 /**
  * Get all service orders for a given vehicle
