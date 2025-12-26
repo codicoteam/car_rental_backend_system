@@ -59,28 +59,25 @@ async function getServiceOrderById(req, res) {
  */
 async function getServiceOrders(req, res) {
   try {
-    const { vehicle_id, status, type, created_from, created_to, page, limit } =
-      req.query;
+    const { vehicle_id, status, type, created_from, created_to } = req.query;
 
-    const result = await serviceOrderService.listServiceOrders({
+    const items = await serviceOrderService.listServiceOrders({
       vehicle_id,
       status,
       type,
       created_from,
       created_to,
-      page,
-      limit,
     });
 
     return res.status(200).json({
       success: true,
-      data: result.items,
-      pagination: result.pagination,
+      data: items,
     });
   } catch (error) {
     return handleError(res, error);
   }
 }
+
 
 /**
  * GET /vehicles/:vehicleId/service-orders
