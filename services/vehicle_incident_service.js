@@ -22,6 +22,7 @@ async function createVehicleIncident(payload) {
 }
 
 // GET /vehicle-incidents (optional filters, no pagination)
+// GET /vehicle-incidents (optional filters, no pagination)
 async function listVehicleIncidents(filters = {}) {
   const query = {};
 
@@ -48,48 +49,122 @@ async function listVehicleIncidents(filters = {}) {
     query.type = filters.type;
   }
 
-  const incidents = await VehicleIncident.find(query).sort({ occurred_at: -1 });
+  const incidents = await VehicleIncident.find(query)
+    .sort({ occurred_at: -1 })
+    .populate({
+      path: "vehicle_id",
+      select: "plate_number vin  status photos",
+    })
+    .populate({
+      path: "reservation_id",
+      select: "reservation_number start_date end_date status customer_id",
+      populate: {
+        path: "customer_id",
+        select: "full_name email phone",
+      },
+    })
+    .populate({
+      path: "branch_id",
+      select: "name code address",
+    });
+
   return incidents;
 }
 
 async function getVehicleIncidentById(id) {
   assertObjectId(id, "incident id");
 
-  const incident = await VehicleIncident.findById(id);
+  const incident = await VehicleIncident.findById(id)
+    .populate({
+      path: "vehicle_id",
+      select: "plate_number vin status photos",
+    })
+    .populate({
+      path: "reservation_id",
+      select: "reservation_number start_date end_date status customer_id",
+      populate: {
+        path: "customer_id",
+        select: "full_name email phone",
+      },
+    })
+    .populate({
+      path: "branch_id",
+      select: "name code address",
+    });
+
   if (!incident) {
     const err = new Error("VehicleIncident not found");
     err.statusCode = 404;
     throw err;
   }
+
   return incident;
 }
+
 
 // GET /vehicles/:vehicleId/vehicle-incidents
 async function getIncidentsByVehicle(vehicleId) {
   assertObjectId(vehicleId, "vehicle_id");
-  const incidents = await VehicleIncident.find({ vehicle_id: vehicleId }).sort({
-    occurred_at: -1,
-  });
+
+  const incidents = await VehicleIncident.find({ vehicle_id: vehicleId })
+    .sort({ occurred_at: -1 })
+    .populate({
+      path: "reservation_id",
+      select: "reservation_number start_date end_date status customer_id",
+      populate: {
+        path: "customer_id",
+        select: "full_name email phone",
+      },
+    })
+    .populate({
+      path: "branch_id",
+      select: "name code address",
+    });
+
   return incidents;
 }
-
 // GET /reservations/:reservationId/vehicle-incidents
 async function getIncidentsByReservation(reservationId) {
   assertObjectId(reservationId, "reservation_id");
+
   const incidents = await VehicleIncident.find({
     reservation_id: reservationId,
-  }).sort({ occurred_at: -1 });
+  })
+    .sort({ occurred_at: -1 })
+    .populate({
+      path: "vehicle_id",
+      select: "plate_number vin status photos",
+    })
+    .populate({
+      path: "branch_id",
+      select: "name code address",
+    });
+
   return incidents;
 }
 
 // GET /branches/:branchId/vehicle-incidents
 async function getIncidentsByBranch(branchId) {
   assertObjectId(branchId, "branch_id");
-  const incidents = await VehicleIncident.find({ branch_id: branchId }).sort({
-    occurred_at: -1,
-  });
+
+  const incidents = await VehicleIncident.find({ branch_id: branchId })
+    .sort({ occurred_at: -1 })
+    .populate({
+      path: "vehicle_id",
+      select: "plate_number vin status photos",
+    })
+    .populate({
+      path: "reservation_id",
+      select: "reservation_number start_date end_date status customer_id",
+      populate: {
+        path: "customer_id",
+        select: "full_name email phone",
+      },
+    })
+
   return incidents;
 }
+
 
 async function updateVehicleIncident(id, payload) {
   assertObjectId(id, "incident id");
