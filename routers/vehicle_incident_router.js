@@ -158,7 +158,7 @@ const {
 
 // Create incident (admin + manager)
 router.post(
-  "/vehicle-incidents",
+  "/",
   authMiddleware,
   requireRoles("admin", "manager"),
   vehicleIncidentController.createVehicleIncident
@@ -166,7 +166,7 @@ router.post(
 
 // List incidents (all auth users, no pagination)
 router.get(
-  "/vehicle-incidents",
+  "/",
   authMiddleware,
   vehicleIncidentController.getVehicleIncidents
 );
@@ -256,14 +256,14 @@ router.get(
 
 // Get by ID (read-only)
 router.get(
-  "/vehicle-incidents/:id",
+  "/:id",
   authMiddleware,
   vehicleIncidentController.getVehicleIncidentById
 );
 
 // Full update (admin + manager)
 router.put(
-  "/vehicle-incidents/:id",
+  "/:id",
   authMiddleware,
   requireRoles("admin", "manager"),
   vehicleIncidentController.updateVehicleIncident
@@ -271,7 +271,7 @@ router.put(
 
 // Delete (admin + manager)
 router.delete(
-  "/vehicle-incidents/:id",
+  "/:id",
   authMiddleware,
   requireRoles("admin", "manager"),
   vehicleIncidentController.deleteVehicleIncident
@@ -319,7 +319,7 @@ router.delete(
 
 // Status update (admin + manager)
 router.patch(
-  "/vehicle-incidents/:id/status",
+  "/:id/status",
   authMiddleware,
   requireRoles("admin", "manager"),
   vehicleIncidentController.updateVehicleIncidentStatus
@@ -352,7 +352,7 @@ router.patch(
 
 // By vehicle (read-only)
 router.get(
-  "/vehicles/:vehicleId/vehicle-incidents",
+  "/:vehicleId/vehicle-incidents",
   authMiddleware,
   vehicleIncidentController.getIncidentsByVehicle
 );
@@ -384,7 +384,7 @@ router.get(
 
 // By reservation (read-only)
 router.get(
-  "/reservations/:reservationId/vehicle-incidents",
+  "/:reservationId/vehicle-incidents",
   authMiddleware,
   vehicleIncidentController.getIncidentsByReservation
 );

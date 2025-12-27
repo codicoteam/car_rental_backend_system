@@ -120,12 +120,12 @@ const DriverProfileSchema = new Schema(
       type: Number,
       min: 0,
       max: 5,
-      default: 0,
+      default: 2,
     },
     rating_count: {
       type: Number,
       min: 0,
-      default: 0,
+      default: 2,
     },
   },
   {
