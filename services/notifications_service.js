@@ -375,7 +375,20 @@ async function listCreatedByUserId({
   if (type) q.type = type;
   if (priority) q.priority = priority;
 
-  return Notification.find(q).sort("-created_at");
+  return Notification.find(q)
+    .sort("-created_at")
+    .populate({
+      path: "created_by",
+      select: "full_name email role",
+    })
+    .populate({
+      path: "acknowledgements.user_id",
+      select: "full_name email role",
+    })
+    .populate({
+      path: "audience.user_id",
+      select: "full_name email role",
+    });
 }
 
 module.exports = {
