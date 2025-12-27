@@ -79,32 +79,31 @@ async function listNotifications({
   type,
   priority,
   active = true,
-  page = 1,
-  limit = 20,
   sort = "-created_at",
 }) {
   const q = {};
+
   if (typeof active === "boolean") q.is_active = active;
   if (status) q.status = status;
   if (type) q.type = type;
   if (priority) q.priority = priority;
 
-  const pg = Math.max(1, Number(page));
-  const lim = Math.max(1, Number(limit));
-  const skip = (pg - 1) * lim;
+  const items = await Notification.find(q)
+    .sort(sort)
+    .populate({
+      path: "created_by",
+      select: "full_name email role",
+    })
+    .populate({
+      path: "acknowledgements.user_id",
+      select: "full_name email role",
+    })
+    .populate({
+      path: "audience.user_id",
+      select: "full_name email role",
+    });
 
-  const [items, total] = await Promise.all([
-    Notification.find(q).sort(sort).skip(skip).limit(lim),
-    Notification.countDocuments(q),
-  ]);
-
-  return {
-    items,
-    total,
-    page: pg,
-    limit: lim,
-    pages: Math.ceil(total / lim) || 1,
-  };
+  return { items };
 }
 
 /** LIST "mine" (audience-filtered) */
@@ -361,9 +360,14 @@ async function listAcknowledgements(id) {
   return doc.acknowledgements || [];
 }
 
-
 /** LIST notifications created by a specific user (no pagination) */
-async function listCreatedByUserId({ createdByUserId, status, type, priority, active }) {
+async function listCreatedByUserId({
+  createdByUserId,
+  status,
+  type,
+  priority,
+  active,
+}) {
   const q = { created_by: createdByUserId };
 
   if (typeof active === "boolean") q.is_active = active;
@@ -373,9 +377,6 @@ async function listCreatedByUserId({ createdByUserId, status, type, priority, ac
 
   return Notification.find(q).sort("-created_at");
 }
-
-
-
 
 module.exports = {
   createNotification,
@@ -392,5 +393,5 @@ module.exports = {
   bulkMarkRead,
   listAcknowledgements,
   listForUserById,
-  listCreatedByUserId
+  listCreatedByUserId,
 };

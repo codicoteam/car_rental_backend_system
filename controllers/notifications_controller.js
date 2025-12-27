@@ -29,23 +29,26 @@ module.exports = {
   },
 
   // GET /
-  list: async (req, res) => {
-    try {
-      const { status, type, priority, active, page, limit, sort } = req.query;
-      const result = await svc.listNotifications({
-        status,
-        type,
-        priority,
-        active: typeof active === "string" ? active === "true" : undefined,
-        page: Number(page) || 1,
-        limit: Number(limit) || 20,
-        sort: sort || "-created_at",
-      });
-      return res.json({ success: true, ...result });
-    } catch (err) {
-      return sendError(res, err);
-    }
-  },
+// controllers/notification_controller.js
+list: async (req, res) => {
+  try {
+    const { status, type, priority, active, sort } = req.query;
+
+    const result = await svc.listNotifications({
+      status,
+      type,
+      priority,
+      active:
+        typeof active === "string" ? active === "true" : undefined,
+      sort: sort || "-created_at",
+    });
+
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    return sendError(res, err);
+  }
+},
+
 
   // GET /mine
   listMine: async (req, res) => {
