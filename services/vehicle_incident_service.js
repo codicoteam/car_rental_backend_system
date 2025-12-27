@@ -57,11 +57,7 @@ async function listVehicleIncidents(filters = {}) {
     })
     .populate({
       path: "reservation_id",
-      select: "reservation_number start_date end_date status customer_id",
-      populate: {
-        path: "customer_id",
-        select: "full_name email phone",
-      },
+      select: "reservation_number start_date end_date status"
     })
     .populate({
       path: "branch_id",
@@ -81,11 +77,7 @@ async function getVehicleIncidentById(id) {
     })
     .populate({
       path: "reservation_id",
-      select: "reservation_number start_date end_date status customer_id",
-      populate: {
-        path: "customer_id",
-        select: "full_name email phone",
-      },
+      select: "reservation_number start_date end_date status"
     })
     .populate({
       path: "branch_id",
@@ -110,9 +102,9 @@ async function getIncidentsByVehicle(vehicleId) {
     .sort({ occurred_at: -1 })
     .populate({
       path: "reservation_id",
-      select: "reservation_number start_date end_date status customer_id",
+      select: "reservation_number start_date end_date status ",
       populate: {
-        path: "customer_id",
+        path: "user_id",
         select: "full_name email phone",
       },
     })
@@ -156,10 +148,6 @@ async function getIncidentsByBranch(branchId) {
     .populate({
       path: "reservation_id",
       select: "reservation_number start_date end_date status customer_id",
-      populate: {
-        path: "customer_id",
-        select: "full_name email phone",
-      },
     })
 
   return incidents;
