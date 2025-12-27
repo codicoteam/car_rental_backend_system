@@ -103,34 +103,36 @@ router.post("/", authMiddleware, ctrl.create);
  * @swagger
  * /api/v1/notifications:
  *   get:
- *     summary: List notifications (global)
+ *     summary: List notifications
  *     tags: [Notifications]
- *     security: [ { bearerAuth: [] } ]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: status
- *         schema: { type: string, enum: ["draft","scheduled","sent","cancelled"] }
+ *         schema:
+ *           type: string
+ *           enum: ["draft","scheduled","sent","cancelled"]
  *       - in: query
  *         name: type
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *       - in: query
  *         name: priority
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *       - in: query
  *         name: active
- *         schema: { type: boolean }
- *       - in: query
- *         name: page
- *         schema: { type: integer, default: 1 }
- *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 20 }
+ *         schema:
+ *           type: boolean
  *       - in: query
  *         name: sort
- *         schema: { type: string, example: "-created_at" }
+ *         schema:
+ *           type: string
+ *           example: "-created_at"
  *     responses:
  *       200:
- *         description: Paginated list
+ *         description: List of notifications
  */
 router.get("/", authMiddleware, ctrl.list);
 
