@@ -54,7 +54,7 @@ const {
 
 /**
  * @openapi
- * /api/reports/admin:
+ * /api/v1/reports/admin:
  *   get:
  *     summary: Admin reports (global or optionally filtered by branch)
  *     tags:
@@ -124,7 +124,7 @@ router.get(
 
 /**
  * @openapi
- * /api/reports/manager:
+ * /api/v1/reports/manager:
  *   get:
  *     summary: Manager reports (scoped to manager branch_ids)
  *     tags:
