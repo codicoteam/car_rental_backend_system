@@ -31,6 +31,7 @@ const vehicleTrackerRouter = require("./routers/vehicle_tracker_router");
 const paymentRouter = require("./routers/payment_router");
 const notificationsRouter = require("./routers/notifications_router");
 const dashboardRouter = require("./routers/dashboard_router");
+const reportRouter = require("./routers/report_router");
 // Load env
 dotenv.config();
 
@@ -67,7 +68,7 @@ app.use("/api/v1/vehicle-trackers", vehicleTrackerRouter);
 app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
-
+app.use("/api/v1/reports", reportRouter);
 // Global error handler (REST)
 app.use((err, req, res, next) => {
   console.error("Global error handler:", err.stack || err);
