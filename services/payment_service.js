@@ -595,6 +595,9 @@ async function listPayments({ userId, status }) {
     })
     .populate({
       path: "driver_booking_id",
+    })
+    .populate({
+      path: "user_id",
     });
 
   return {
