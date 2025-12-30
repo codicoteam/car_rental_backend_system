@@ -582,14 +582,20 @@ async function getPaymentById(id) {
   }
   return p;
 }
-
 async function listPayments({ userId, status }) {
   const q = {};
 
   if (userId) q.user_id = userId;
   if (status) q.paymentStatus = status;
 
-  const items = await Payment.find(q).sort({ created_at: -1 });
+  const items = await Payment.find(q)
+    .sort({ created_at: -1 })
+    .populate({
+      path: "reservation_id",
+    })
+    .populate({
+      path: "driver_booking_id",
+    });
 
   return {
     items,
