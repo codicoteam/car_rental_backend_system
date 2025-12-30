@@ -3155,6 +3155,7 @@ const options = {
     "./routers/payment_router.js",
     "./routers/notifications_router.js",
     "./routers/dashboard_router.js",
+    "./routers/report_router.js",
   ],
 };
 
