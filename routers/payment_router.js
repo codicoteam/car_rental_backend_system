@@ -206,7 +206,6 @@ router.post("/:id/poll", authMiddleware, paymentController.status);
  *         description: Not found
  */
 router.get("/:id", authMiddleware, paymentController.getOne);
-
 /**
  * @swagger
  * /api/v1/payments:
@@ -218,19 +217,17 @@ router.get("/:id", authMiddleware, paymentController.getOne);
  *     parameters:
  *       - in: query
  *         name: status
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *       - in: query
  *         name: mine
- *         schema: { type: string, enum: ["true","false"], default: "false" }
- *       - in: query
- *         name: page
- *         schema: { type: integer, default: 1 }
- *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 20 }
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
+ *           default: "false"
  *     responses:
  *       200:
- *         description: Paginated list
+ *         description: List of payments
  */
 router.get("/", authMiddleware, paymentController.list);
 

@@ -583,27 +583,17 @@ async function getPaymentById(id) {
   return p;
 }
 
-async function listPayments({ userId, status, page = 1, limit = 20 }) {
+async function listPayments({ userId, status }) {
   const q = {};
+
   if (userId) q.user_id = userId;
   if (status) q.paymentStatus = status;
 
-  const skip = (Math.max(1, page) - 1) * Math.max(1, limit);
-
-  const [items, total] = await Promise.all([
-    Payment.find(q)
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(Math.max(1, limit)),
-    Payment.countDocuments(q),
-  ]);
+  const items = await Payment.find(q).sort({ created_at: -1 });
 
   return {
     items,
-    total,
-    page: Number(page),
-    limit: Number(limit),
-    pages: Math.ceil(total / Math.max(1, limit)) || 1,
+    total: items.length,
   };
 }
 

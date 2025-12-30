@@ -28,12 +28,10 @@ module.exports = {
       } = req.body;
 
       if (!reservation_id && !driver_booking_id) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "reservation_id or driver_booking_id is required.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "reservation_id or driver_booking_id is required.",
+        });
       }
 
       const result = await paymentService.initiateRedirectPayment({
@@ -70,12 +68,10 @@ module.exports = {
       } = req.body;
 
       if (!reservation_id && !driver_booking_id) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "reservation_id or driver_booking_id is required.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "reservation_id or driver_booking_id is required.",
+        });
       }
 
       const result = await paymentService.initiateMobilePayment({
@@ -122,14 +118,14 @@ module.exports = {
   // GET /
   list: async (req, res) => {
     try {
-      const { status, page, limit, mine } = req.query;
-      const userId = mine === "true" ? req.user._id : undefined; // everyone can access; mine limits to own
+      const { status, mine } = req.query;
+      const userId = mine === "true" ? req.user._id : undefined;
+
       const result = await paymentService.listPayments({
         userId,
         status,
-        page: Number(page) || 1,
-        limit: Number(limit) || 20,
       });
+
       res.json({ success: true, ...result });
     } catch (err) {
       sendError(res, err);
@@ -201,12 +197,10 @@ module.exports = {
       res.json({ success: true, ...result });
     } catch (err) {
       // Always 200 OK for webhooks unless internal error
-      res
-        .status(200)
-        .json({
-          success: false,
-          message: err.message || "Webhook processing error.",
-        });
+      res.status(200).json({
+        success: false,
+        message: err.message || "Webhook processing error.",
+      });
     }
   },
 };
