@@ -3154,6 +3154,7 @@ const options = {
     "./routers/vehicle_tracker_router.js",
     "./routers/payment_router.js",
     "./routers/notifications_router.js",
+    "./routers/dashboard_router.js",
   ],
 };
 
