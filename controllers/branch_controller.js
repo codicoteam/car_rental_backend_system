@@ -1,4 +1,3 @@
-// controllers/branch_controller.js
 const branchService = require("../services/branch_service");
 
 function hasRole(user, role) {
@@ -224,7 +223,7 @@ async function findNearbyBranches(req, res) {
     const branches = await branchService.findNearbyBranches(
       lngNum,
       latNum,
-      maxDist
+      maxDist,
     );
 
     return res.json({
