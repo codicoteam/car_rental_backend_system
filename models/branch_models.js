@@ -16,7 +16,7 @@ const OpeningPeriodSchema = new Schema(
       match: [/^([01]\d|2[0-3]):[0-5]\d$/, "close must be HH:mm"],
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 /** Opening hours object with per-day arrays of periods */
@@ -31,7 +31,7 @@ const OpeningHoursSchema = new Schema(
     sun: { type: [OpeningPeriodSchema], default: [] },
     // Optional public holiday overrides could be added later
   },
-  { _id: false }
+  { _id: false },
 );
 
 const AddressSchema = new Schema(
@@ -43,7 +43,7 @@ const AddressSchema = new Schema(
     postal_code: { type: String, trim: true },
     country: { type: String, trim: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 /** GeoJSON Point */
@@ -65,7 +65,7 @@ const GeoPointSchema = new Schema(
       },
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const emailRegex =
@@ -95,23 +95,33 @@ const BranchSchema = new Schema(
       type: String,
       trim: true,
       lowercase: true,
-      validate: { validator: (v) => !v || emailRegex.test(v), message: "Invalid email" },
+      validate: {
+        validator: (v) => !v || emailRegex.test(v),
+        message: "Invalid email",
+      },
     },
 
     imageLoc: { type: String, trim: true },
 
+    // 🔥 NEW: Reference to the User who manages this branch
+    branchManager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // references the User model
+      required: false, // optional – branch may not have a manager yet
+    },
 
     active: { type: Boolean, default: true },
   },
   {
     timestamps: true,
     collection: "branches",
-  }
+  },
 );
 
 // Indexes
 BranchSchema.index({ code: 1 }, { unique: true });
 BranchSchema.index({ geo: "2dsphere" });
+BranchSchema.index({ branchManager: 1 }); // optional index for queries by manager
 
 // Virtual: nicely formatted one-line address
 BranchSchema.virtual("fullAddress").get(function () {
@@ -148,7 +158,6 @@ BranchSchema.methods.isOpenAt = function (at = new Date()) {
   const hh = pad(local.getHours());
   const mm = pad(local.getMinutes());
   const time = `${hh}:${mm}`;
-
   // 0=Sun .. 6=Sat; map to schema keys
   const dayMap = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
   const key = dayMap[local.getDay()];

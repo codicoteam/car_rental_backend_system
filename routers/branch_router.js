@@ -1,4 +1,3 @@
-// routers/branch_router.js
 const express = require("express");
 const router = express.Router();
 
@@ -99,7 +98,7 @@ router.get("/nearby", branchController.findNearbyBranches);
  *   get:
  *     summary: Check if a branch is open at a given time
  *     description: >
- *       Public endpoint to check if the branch is open.  
+ *       Public endpoint to check if the branch is open.
  *       If `at` is omitted, uses current server time.
  *     tags: [Branches]
  *     parameters:
@@ -186,6 +185,9 @@ router.get("/:id/is-open", branchController.isBranchOpen);
  *                 type: string
  *               active:
  *                 type: boolean
+ *               branchManager:
+ *                 type: string
+ *                 description: ObjectId of the user who manages this branch
  *     responses:
  *       201:
  *         description: Branch created successfully
@@ -196,12 +198,7 @@ router.get("/:id/is-open", branchController.isBranchOpen);
  *       403:
  *         description: Forbidden
  */
-router.post(
-  "/",
-  authMiddleware,
-  managerOrAdmin,
-  branchController.createBranch
-);
+router.post("/", authMiddleware, managerOrAdmin, branchController.createBranch);
 
 /**
  * @swagger
@@ -245,6 +242,11 @@ router.get("/:id", branchController.getBranchById);
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               branchManager:
+ *                 type: string
+ *                 description: ObjectId of the user who manages this branch
+ *               # other fields are also allowed
  *     responses:
  *       200:
  *         description: Branch updated successfully
@@ -261,7 +263,7 @@ router.patch(
   "/:id",
   authMiddleware,
   managerOrAdmin,
-  branchController.updateBranch
+  branchController.updateBranch,
 );
 
 /**
@@ -290,11 +292,6 @@ router.patch(
  *       404:
  *         description: Branch not found
  */
-router.delete(
-  "/:id",
-  authMiddleware,
-  adminOnly,
-  branchController.deleteBranch
-);
+router.delete("/:id", authMiddleware, adminOnly, branchController.deleteBranch);
 
 module.exports = router;
