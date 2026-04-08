@@ -1,3 +1,4 @@
+// routes/branch_routes.js
 const express = require("express");
 const router = express.Router();
 
@@ -121,6 +122,38 @@ router.get("/nearby", branchController.findNearbyBranches);
  *         description: Branch not found
  */
 router.get("/:id/is-open", branchController.isBranchOpen);
+
+/**
+ * @swagger
+ * /api/v1/branches/manager/{managerId}:
+ *   get:
+ *     summary: Get branches by branch manager ID
+ *     description: >
+ *       Returns all branches assigned to a specific manager.
+ *       Accessible by admin or the manager themselves.
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: managerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID of the branch manager
+ *     responses:
+ *       200:
+ *         description: List of branches managed by the user
+ *       403:
+ *         description: Forbidden – not admin nor the requested manager
+ *       404:
+ *         description: Manager not found
+ */
+router.get(
+  "/manager/:managerId",
+  authMiddleware,
+  branchController.getBranchesByManager,
+);
 
 /**
  * @swagger

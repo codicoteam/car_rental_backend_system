@@ -1,5 +1,6 @@
+// services/branch_service.js
 const Branch = require("../models/branch_models");
-const User = require("../models/user_model"); // <-- import User model for validation
+const User = require("../models/user_model");
 
 /**
  * Helper: validate that a user exists (and optionally has manager role)
@@ -31,14 +32,11 @@ async function validateUser(userId) {
  */
 async function createBranch(payload) {
   try {
-    // Validate branchManager if provided
     if (payload.branchManager) {
       await validateUser(payload.branchManager);
     }
-
     const branch = await Branch.create(payload);
-    // Populate the branchManager after creation
-    await branch.populate('branchManager', 'full_name email roles');
+    await branch.populate("branchManager", "full_name email roles");
     return branch;
   } catch (err) {
     const error = new Error("Failed to create branch");
@@ -55,7 +53,7 @@ async function createBranch(payload) {
 async function getAllBranches() {
   const branches = await Branch.find()
     .sort({ name: 1 })
-    .populate('branchManager', 'full_name email roles'); // populate manager info
+    .populate("branchManager", "full_name email roles");
   return branches;
 }
 
@@ -63,7 +61,10 @@ async function getAllBranches() {
  * Get a branch by ID, with branchManager populated
  */
 async function getBranchById(id) {
-  const branch = await Branch.findById(id).populate('branchManager', 'full_name email roles');
+  const branch = await Branch.findById(id).populate(
+    "branchManager",
+    "full_name email roles",
+  );
   if (!branch) {
     const error = new Error("Branch not found");
     error.statusCode = 404;
@@ -78,23 +79,19 @@ async function getBranchById(id) {
  */
 async function updateBranch(id, payload) {
   try {
-    // Validate branchManager if present in payload
     if (payload.branchManager) {
       await validateUser(payload.branchManager);
     }
-
     const branch = await Branch.findByIdAndUpdate(id, payload, {
       new: true,
       runValidators: true,
-    }).populate('branchManager', 'full_name email roles');
-
+    }).populate("branchManager", "full_name email roles");
     if (!branch) {
       const error = new Error("Branch not found");
       error.statusCode = 404;
       error.code = "BRANCH_NOT_FOUND";
       throw error;
     }
-
     return branch;
   } catch (err) {
     const error = new Error("Failed to update branch");
@@ -126,7 +123,6 @@ async function deleteBranch(id) {
  */
 async function searchBranches(filters = {}) {
   const { city, region, active, q } = filters;
-
   const query = {};
 
   if (typeof active !== "undefined") {
@@ -156,7 +152,7 @@ async function searchBranches(filters = {}) {
 
   const branches = await Branch.find(query)
     .sort({ name: 1 })
-    .populate('branchManager', 'full_name email roles');
+    .populate("branchManager", "full_name email roles");
   return branches;
 }
 
@@ -165,8 +161,10 @@ async function searchBranches(filters = {}) {
  * Returns branches with branchManager populated
  */
 async function findNearbyBranches(lng, lat, maxDistance = 5000) {
-  const branches = await Branch.findNearby(lng, lat, maxDistance)
-    .populate('branchManager', 'full_name email roles');
+  const branches = await Branch.findNearby(lng, lat, maxDistance).populate(
+    "branchManager",
+    "full_name email roles",
+  );
   return branches;
 }
 
@@ -175,18 +173,35 @@ async function findNearbyBranches(lng, lat, maxDistance = 5000) {
  * Returns branch info with branchManager populated
  */
 async function isBranchOpen(branchId, at) {
-  const branch = await Branch.findById(branchId).populate('branchManager', 'full_name email roles');
+  const branch = await Branch.findById(branchId).populate(
+    "branchManager",
+    "full_name email roles",
+  );
   if (!branch) {
     const error = new Error("Branch not found");
     error.statusCode = 404;
     error.code = "BRANCH_NOT_FOUND";
     throw error;
   }
-
   const date = at ? new Date(at) : new Date();
   const open = branch.isOpenAt(date);
-
   return { branch, open, at: date };
+}
+
+/**
+ * Get branches by branch manager ID.
+ * @param {string} managerId - User ID of the branch manager
+ * @returns {Promise<Array>} - List of branches assigned to that manager
+ */
+async function getBranchesByManager(managerId) {
+  // Validate that the manager exists
+  await validateUser(managerId);
+
+  const branches = await Branch.find({ branchManager: managerId })
+    .sort({ name: 1 })
+    .populate("branchManager", "full_name email roles");
+
+  return branches;
 }
 
 module.exports = {
@@ -198,4 +213,5 @@ module.exports = {
   searchBranches,
   findNearbyBranches,
   isBranchOpen,
+  getBranchesByManager, // <-- new export
 };

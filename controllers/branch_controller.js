@@ -1,3 +1,4 @@
+// controllers/branch_controller.js
 const branchService = require("../services/branch_service");
 
 function hasRole(user, role) {
@@ -17,7 +18,6 @@ function isBranchManagerOrAdmin(user) {
 async function createBranch(req, res) {
   try {
     const { user } = req;
-
     if (!isBranchManagerOrAdmin(user)) {
       return res.status(403).json({
         success: false,
@@ -25,9 +25,7 @@ async function createBranch(req, res) {
         message: "Only manager/admin can create branches",
       });
     }
-
     const branch = await branchService.createBranch(req.body);
-
     return res.status(201).json({
       success: true,
       message: "Branch created successfully",
@@ -93,7 +91,6 @@ async function getBranchById(req, res) {
 async function updateBranch(req, res) {
   try {
     const { user } = req;
-
     if (!isBranchManagerOrAdmin(user)) {
       return res.status(403).json({
         success: false,
@@ -101,9 +98,7 @@ async function updateBranch(req, res) {
         message: "Only manager/admin can update branches",
       });
     }
-
     const branch = await branchService.updateBranch(req.params.id, req.body);
-
     return res.json({
       success: true,
       message: "Branch updated successfully",
@@ -127,7 +122,6 @@ async function updateBranch(req, res) {
 async function deleteBranch(req, res) {
   try {
     const { user } = req;
-
     if (!hasRole(user, "admin")) {
       return res.status(403).json({
         success: false,
@@ -135,9 +129,7 @@ async function deleteBranch(req, res) {
         message: "Only admin can delete branches",
       });
     }
-
     await branchService.deleteBranch(req.params.id);
-
     return res.json({
       success: true,
       message: "Branch deleted successfully",
@@ -165,7 +157,6 @@ async function searchBranches(req, res) {
       active,
       q,
     });
-
     return res.json({
       success: true,
       data: branches,
@@ -187,7 +178,6 @@ async function searchBranches(req, res) {
 async function findNearbyBranches(req, res) {
   try {
     const { lng, lat, maxDistance } = req.query;
-
     if (
       typeof lng === "undefined" ||
       typeof lat === "undefined" ||
@@ -200,11 +190,9 @@ async function findNearbyBranches(req, res) {
         message: "lng and lat are required",
       });
     }
-
     const lngNum = Number(lng);
     const latNum = Number(lat);
     const maxDist = maxDistance ? Number(maxDistance) : 5000;
-
     if (
       Number.isNaN(lngNum) ||
       Number.isNaN(latNum) ||
@@ -219,13 +207,11 @@ async function findNearbyBranches(req, res) {
         message: "lng/lat are out of range",
       });
     }
-
     const branches = await branchService.findNearbyBranches(
       lngNum,
       latNum,
       maxDist,
     );
-
     return res.json({
       success: true,
       data: branches,
@@ -248,9 +234,7 @@ async function isBranchOpen(req, res) {
   try {
     const { id } = req.params;
     const { at } = req.query;
-
     const result = await branchService.isBranchOpen(id, at);
-
     return res.json({
       success: true,
       data: {
@@ -269,6 +253,43 @@ async function isBranchOpen(req, res) {
   }
 }
 
+/**
+ * GET /api/branches/manager/:managerId
+ * Get branches assigned to a specific branch manager.
+ * Allowed: admin or the manager themselves.
+ */
+async function getBranchesByManager(req, res) {
+  try {
+    const { user } = req;
+    const { managerId } = req.params;
+
+    // Authorization: only admin or the manager whose ID is requested
+    const isAdmin = hasRole(user, "admin");
+    const isSelf = user.id === managerId;
+
+    if (!isAdmin && !isSelf) {
+      return res.status(403).json({
+        success: false,
+        code: "BRANCH_FORBIDDEN",
+        message: "You are not allowed to view branches for this manager",
+      });
+    }
+
+    const branches = await branchService.getBranchesByManager(managerId);
+    return res.json({
+      success: true,
+      data: branches,
+    });
+  } catch (error) {
+    console.error("getBranchesByManager error:", error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      code: error.code || "BRANCH_MANAGER_LIST_ERROR",
+      message: error.message || "Failed to fetch branches for manager",
+    });
+  }
+}
+
 module.exports = {
   createBranch,
   getAllBranches,
@@ -278,4 +299,5 @@ module.exports = {
   searchBranches,
   findNearbyBranches,
   isBranchOpen,
+  getBranchesByManager, // <-- new export
 };
