@@ -69,7 +69,8 @@ async function getCustomerHomeData(userId) {
 
       Reservation.findOne({ user_id: userId, status: { $in: ["pending", "confirmed", "checked_out"] } })
         .populate({ path: "vehicle_id", select: "plate_number color photos", populate: { path: "vehicle_model_id", select: "make model year" } })
-        .select("status pickup dropoff pricing code created_at")
+        .populate("vehicle_model_id", "make model year class")
+        .select("status pickup dropoff pricing code payment_summary vehicle_model_id created_at")
         .sort({ created_at: -1 })
         .lean(),
 
