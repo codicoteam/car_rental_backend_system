@@ -148,6 +148,16 @@ const ReservationSchema = new Schema(
   }
 );
 
+/** Auto-generate booking code if not supplied **/
+ReservationSchema.pre("validate", function (next) {
+  if (!this.code) {
+    const ts = Date.now().toString(36).toUpperCase();
+    const rand = Math.random().toString(36).substr(2, 4).toUpperCase();
+    this.code = `RES-${ts}-${rand}`;
+  }
+  next();
+});
+
 /** Validations **/
 ReservationSchema.pre("validate", function (next) {
   if (!this.pickup || !this.dropoff) {
