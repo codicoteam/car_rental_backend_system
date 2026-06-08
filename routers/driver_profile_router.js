@@ -50,6 +50,9 @@ const managerOrAdmin = requireRoles("manager", "admin");
  */
 router.get("/public", driverController.listPublicDrivers);
 
+// Any authenticated user can self-register as a driver
+router.post("/register-as-driver", authMiddleware, driverController.registerAsDriver);
+
 /**
  * @swagger
  * /api/v1/driver-profiles/me:

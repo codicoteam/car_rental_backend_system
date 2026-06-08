@@ -152,9 +152,21 @@ async function loginUser(req, res) {
     }
 
     if (user.status !== "active") {
+      // Auto-resend a fresh OTP so the user doesn't have to request one manually
+      if (user.status === "pending" && !user.email_verified) {
+        try {
+          await userService.resendEmailVerificationOtp(user.email);
+        } catch (_) {
+          // Don't block the login response if the resend fails
+        }
+      }
       return res.status(403).json({
         success: false,
-        message: "Account is not active. Please verify your email.",
+        message: "Account is not active. Please verify your email to continue.",
+        data: {
+          require_verification: true,
+          email: user.email,
+        },
       });
     }
 

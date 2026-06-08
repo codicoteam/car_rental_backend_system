@@ -306,6 +306,41 @@ async function resetPasswordWithOtp({ email, otp, newPassword }) {
 }
 
 /**
+ * Resend email verification OTP for a pending account
+ */
+async function resendEmailVerificationOtp(email) {
+  const normalizedEmail = email.toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (user.email_verified && user.status === "active") {
+    const error = new Error("Email already verified");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const otp = generateOtp();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  user.email_verification_otp = otp;
+  user.email_verification_expires_at = expiresAt;
+  await user.save();
+
+  await emailService.sendVerificationEmail({
+    to: normalizedEmail,
+    fullName: user.full_name,
+    otp,
+  });
+
+  return true;
+}
+
+/**
  * Find user by email (without password_hash)
  */
 async function getUserByEmail(email) {
@@ -488,6 +523,7 @@ module.exports = {
   createUser,
   registerUserWithEmailOtp,
   verifyEmailOtp,
+  resendEmailVerificationOtp,
   getUserByEmail,
   getUserByEmailWithPassword,
   validatePassword,
