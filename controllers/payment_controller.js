@@ -13,6 +13,27 @@ function sendError(res, err) {
 }
 
 module.exports = {
+  // POST / — convenience: derive amount from reservation, initiate redirect payment
+  initiateForReservation: async (req, res) => {
+    try {
+      const { reservation_id, promo_code } = req.body;
+      if (!reservation_id) {
+        return res.status(400).json({
+          success: false,
+          message: "reservation_id is required.",
+        });
+      }
+      const result = await paymentService.initiateForReservation({
+        user: req.user,
+        reservation_id,
+        promo_code,
+      });
+      res.status(201).json({ success: true, ...result });
+    } catch (err) {
+      sendError(res, err);
+    }
+  },
+
   // POST /initiate
   initiate: async (req, res) => {
     try {

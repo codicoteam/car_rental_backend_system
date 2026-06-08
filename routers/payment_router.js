@@ -106,6 +106,9 @@ const paymentController = require("../controllers/payment_controller");
  *           application/json:
  *             schema: { $ref: '#/components/schemas/ErrorResponse' }
  */
+// Convenience route: POST /api/v1/payments with {reservation_id} — derives amount from reservation
+router.post("/", authMiddleware, paymentController.initiateForReservation);
+
 router.post("/initiate", authMiddleware, paymentController.initiate);
 
 /**
