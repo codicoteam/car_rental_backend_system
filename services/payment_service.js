@@ -1,6 +1,7 @@
 // services/payment_service.js
 const mongoose = require("mongoose");
 const Payment = require("../models/payment_model");
+const Reservation = require("../models/reservations_model");
 const PromoCode = require("../models/promo_code_model");
 const User = require("../models/user_model"); // Add User model import
 
@@ -244,6 +245,69 @@ async function initiateRedirectPayment({
   };
 }
 
+/**
+ * Convenience: initiate a redirect payment for a reservation.
+ * Caller only needs to supply {reservation_id}; amount + currency are
+ * derived from the reservation's pricing snapshot.
+ */
+async function initiateForReservation({ user, reservation_id, promo_code }) {
+  if (!reservation_id) {
+    const err = new Error("reservation_id is required.");
+    err.status = 400;
+    throw err;
+  }
+
+  const reservation = await Reservation.findById(reservation_id);
+  if (!reservation) {
+    const err = new Error("Reservation not found.");
+    err.status = 404;
+    throw err;
+  }
+
+  // Ownership check (customers can only pay their own reservations)
+  const isStaff = Array.isArray(user.roles) &&
+    user.roles.some((r) => ["admin", "manager", "agent"].includes(r));
+  if (!isStaff && String(reservation.user_id) !== String(user._id)) {
+    const err = new Error("Not authorized to pay for this reservation.");
+    err.status = 403;
+    throw err;
+  }
+
+  if (reservation.payment_summary?.status === "paid") {
+    const err = new Error("This reservation is already paid.");
+    err.status = 409;
+    throw err;
+  }
+
+  const pricing = reservation.pricing;
+  if (!pricing || !pricing.grand_total) {
+    const err = new Error("Reservation has no pricing information.");
+    err.status = 400;
+    throw err;
+  }
+
+  const amount = parseFloat(pricing.grand_total.toString());
+  const currency = pricing.currency || "USD";
+
+  const result = await initiateRedirectPayment({
+    user,
+    reservation_id,
+    amount,
+    currency,
+    promo_code,
+    reference: reservation.code,
+    lineItem: `Reservation ${reservation.code}`,
+  });
+
+  return {
+    redirectUrl: result.redirectUrl,
+    pollUrl: result.pollUrl,
+    payment_id: result.payment._id.toString(),
+    payment: result.payment,
+    promo_warning: result.promo_warning || null,
+  };
+}
+
 /** Initiate mobile payment */
 async function initiateMobilePayment({
   user,
@@ -375,6 +439,16 @@ async function pollStatus({ paymentId, pollUrl }) {
     if (provider_ref && !payment.provider_ref)
       payment.provider_ref = provider_ref;
     await payment.save();
+
+    // Keep reservation payment_summary in sync
+    if (newStatus === "paid" && payment.reservation_id) {
+      await Reservation.findByIdAndUpdate(payment.reservation_id, {
+        "payment_summary.status": "paid",
+        "payment_summary.paid_total": payment.amount,
+        "payment_summary.outstanding": mongoose.Types.Decimal128.fromString("0.00"),
+        "payment_summary.last_payment_at": new Date(),
+      });
+    }
   }
 
   return {
@@ -608,6 +682,7 @@ async function listPayments({ userId, status }) {
 
 module.exports = {
   initiateRedirectPayment,
+  initiateForReservation,
   initiateMobilePayment,
   pollStatus,
   applyPromo,
