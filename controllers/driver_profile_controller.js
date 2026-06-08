@@ -241,7 +241,33 @@ async function listPublicDrivers(req, res) {
   }
 }
 
+/**
+ * POST /api/v1/driver-profiles/register-as-driver
+ * Any authenticated user (customer, agent, etc.) can call this.
+ * Adds 'driver' role + creates a pending driver profile.
+ */
+async function registerAsDriver(req, res) {
+  try {
+    const profile = await driverService.registerAsDriver(req.user._id, req.body);
+    return res.status(201).json({
+      success: true,
+      message:
+        "Driver application submitted. Your profile is pending admin review.",
+      data: profile,
+    });
+  } catch (error) {
+    console.error("registerAsDriver error:", error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      code: error.code || "DRIVER_REGISTER_ERROR",
+      message: error.message || "Failed to register as driver",
+      ...(error.details ? { details: error.details } : {}),
+    });
+  }
+}
+
 module.exports = {
+  registerAsDriver,
   createMyDriverProfile,
   getMyDriverProfile,
   updateMyDriverProfile,

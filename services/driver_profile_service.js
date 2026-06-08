@@ -284,6 +284,50 @@ async function listPublicDrivers(filters = {}) {
   return profiles;
 }
 
+/**
+ * Self-registration: any authenticated user (customer) calls this.
+ * Adds 'driver' role to their account and creates a pending driver profile.
+ * If they already have a driver profile, returns it instead.
+ */
+async function registerAsDriver(userId, payload) {
+  // 1. Add driver role if not already present
+  await User.findByIdAndUpdate(
+    userId,
+    { $addToSet: { roles: "driver" } },
+    { new: true }
+  );
+
+  // 2. Return existing profile if already registered
+  const existing = await DriverProfile.findOne({ user_id: userId });
+  if (existing) {
+    return existing;
+  }
+
+  // 3. Create a new pending driver profile
+  try {
+    const profile = await DriverProfile.create({
+      user_id: userId,
+      display_name: payload.display_name,
+      base_city: payload.base_city,
+      base_region: payload.base_region,
+      base_country: payload.base_country || "Zimbabwe",
+      hourly_rate: payload.hourly_rate || 0,
+      bio: payload.bio,
+      years_experience: payload.years_experience || 0,
+      languages: payload.languages || ["English"],
+      identity_document: payload.identity_document,
+      driver_license: payload.driver_license,
+    });
+    return profile;
+  } catch (err) {
+    const error = new Error("Failed to create driver profile");
+    error.statusCode = 400;
+    error.code = "DRIVER_REGISTER_FAILED";
+    error.details = err.message;
+    throw error;
+  }
+}
+
 module.exports = {
   createDriverProfileForUser,
   getDriverProfileForUser,
@@ -295,4 +339,5 @@ module.exports = {
   adminUpdateDriverProfile,
   deleteDriverProfile,
   listPublicDrivers,
+  registerAsDriver,
 };

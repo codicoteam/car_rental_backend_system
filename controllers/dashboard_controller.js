@@ -1,5 +1,6 @@
 // controllers/dashboard_controller.js
 const dashboardService = require("../services/dashboard_services");
+const { getCustomerHomeData } = require("../services/customer_home_service");
 
 /**
  * Standard API error response helper
@@ -74,7 +75,17 @@ const getManagerDashboard = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true, data });
 });
 
+/**
+ * GET /api/v1/dashboard/customer
+ * Requires auth. Returns all data needed for the customer home screen.
+ */
+const getCustomerDashboard = asyncHandler(async (req, res) => {
+  const data = await getCustomerHomeData(req.user._id);
+  return res.status(200).json({ success: true, data });
+});
+
 module.exports = {
   getAdminDashboard,
   getManagerDashboard,
+  getCustomerDashboard,
 };

@@ -186,8 +186,24 @@ router.get(
 router.get(
   "/manager",
   authMiddleware,
-  requireRoles("manager"), // ✅ use requireRoles factory OR swap to managerMiddleware
+  requireRoles("manager"),
   dashboardController.getManagerDashboard
 );
+
+/**
+ * @openapi
+ * /api/v1/dashboard/customer:
+ *   get:
+ *     summary: Customer home screen data (featured vehicles, branches, promos, active booking, drivers)
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All data needed to render the customer home screen
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/customer", authMiddleware, dashboardController.getCustomerDashboard);
 
 module.exports = router;
