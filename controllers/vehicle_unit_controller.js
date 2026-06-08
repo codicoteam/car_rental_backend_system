@@ -186,10 +186,27 @@ async function recordVehicleService(req, res) {
   }
 }
 
+/**
+ * GET /api/v1/vehicles/available
+ * Customer-facing: available vehicles with rate plan data
+ */
+async function getAvailableVehicles(req, res) {
+  try {
+    const { getAvailableVehiclesForCustomer } = require("../services/customer_home_service");
+    const { vehicle_class, branch_id, limit } = req.query;
+    const vehicles = await getAvailableVehiclesForCustomer({ vehicleClass: vehicle_class, branchId: branch_id, limit });
+    return res.json({ success: true, data: vehicles });
+  } catch (error) {
+    console.error("getAvailableVehicles error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch available vehicles" });
+  }
+}
+
 module.exports = {
   createVehicle,
   listVehicles,
   getVehicleById,
+  getAvailableVehicles,
   updateVehicle,
   deleteVehicle,
   updateVehicleAvailability,

@@ -151,6 +151,9 @@ router.post(
  *       200:
  *         description: List of vehicles
  */
+// Customer-facing: available vehicles with pricing (no auth required)
+router.get("/available", vehicleUnitController.getAvailableVehicles);
+
 router.get("/", vehicleUnitController.listVehicles);
 
 /**
