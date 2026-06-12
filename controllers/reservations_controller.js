@@ -228,6 +228,79 @@ async function updateReservationStatus(req, res) {
 }
 
 /**
+ * POST /api/v1/reservations/:id/return
+ * Admin/manager: process vehicle return + record vehicle check.
+ */
+async function submitVehicleReturn(req, res) {
+  try {
+    const { user } = req;
+    if (!isStaff(user)) {
+      return res.status(403).json({
+        success: false,
+        code: "RESERVATION_FORBIDDEN",
+        message: "Only staff can process vehicle returns",
+      });
+    }
+
+    const reservation = await reservationService.submitVehicleReturn(
+      req.params.id,
+      user._id,
+      req.body
+    );
+
+    return res.json({
+      success: true,
+      message: "Vehicle return processed successfully",
+      data: reservation,
+    });
+  } catch (error) {
+    console.error("submitVehicleReturn error:", error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      code: error.code || "RESERVATION_RETURN_ERROR",
+      message: error.message || "Failed to process vehicle return",
+    });
+  }
+}
+
+/**
+ * PATCH /api/v1/reservations/:id/close
+ * Admin/manager: close a booking after vehicle returned + payment done.
+ */
+async function closeReservation(req, res) {
+  try {
+    const { user } = req;
+    if (!isStaff(user)) {
+      return res.status(403).json({
+        success: false,
+        code: "RESERVATION_FORBIDDEN",
+        message: "Only staff can close reservations",
+      });
+    }
+
+    const force = req.body?.force === true;
+    const reservation = await reservationService.closeReservation(
+      req.params.id,
+      user._id,
+      { force }
+    );
+
+    return res.json({
+      success: true,
+      message: "Reservation closed successfully",
+      data: reservation,
+    });
+  } catch (error) {
+    console.error("closeReservation error:", error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      code: error.code || "RESERVATION_CLOSE_ERROR",
+      message: error.message || "Failed to close reservation",
+    });
+  }
+}
+
+/**
  * POST /api/reservations/availability
  * check if vehicle is available for [start, end)
  */
@@ -286,5 +359,7 @@ module.exports = {
   updateReservation,
   deleteReservation,
   updateReservationStatus,
+  submitVehicleReturn,
+  closeReservation,
   checkVehicleAvailability,
 };

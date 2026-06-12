@@ -2,6 +2,7 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const chatService = require("../services/chat_service");
+const ChatConversation = require("../models/chat_conversation_model");
 const { initVehicleTrackingNamespace } = require("./vehicle_tracking_socket");
 
 /**
@@ -25,6 +26,26 @@ function initChatSocket(server) {
       origin: "*", // TODO: restrict in production
     },
   });
+
+  // ---------------------------------------------------------------------------
+  // Online presence: Map<userId, Set<socketId>>
+  // ---------------------------------------------------------------------------
+  const onlineUsers = new Map();
+
+  /**
+   * Get all conversation room names for a user (best-effort, no throw).
+   */
+  async function getUserConversationRooms(userId) {
+    try {
+      const convos = await ChatConversation.find({
+        "participants.user_id": String(userId),
+        is_archived: false,
+      }).select("_id");
+      return convos.map((c) => `conversation:${c._id}`);
+    } catch {
+      return [];
+    }
+  }
 
   /**
    * Socket auth middleware using JWT for CHAT namespace (root)
@@ -54,8 +75,45 @@ function initChatSocket(server) {
   });
 
   // ---------------- CHAT EVENTS ON ROOT NAMESPACE ----------------
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     console.log("🔌 Socket connected:", socket.id, "user:", socket.user?._id);
+
+    const userId = String(socket.user._id);
+
+    // ---- ONLINE PRESENCE: register socket ----
+    if (!onlineUsers.has(userId)) {
+      onlineUsers.set(userId, new Set());
+    }
+    onlineUsers.get(userId).add(socket.id);
+
+    // Broadcast user:online to all conversation rooms (best-effort)
+    (async () => {
+      try {
+        const rooms = await getUserConversationRooms(userId);
+        for (const room of rooms) {
+          socket.to(room).emit("user:online", { userId });
+        }
+      } catch {
+        // best-effort
+      }
+    })();
+
+    // ---- CHECK ONLINE STATUS ----
+    socket.on("user:check_online", (payload) => {
+      try {
+        const { userIds } = payload || {};
+        if (!Array.isArray(userIds)) return;
+
+        const statuses = {};
+        for (const id of userIds) {
+          const idStr = String(id);
+          statuses[idStr] = onlineUsers.has(idStr) && onlineUsers.get(idStr).size > 0;
+        }
+        socket.emit("user:online_status", { statuses });
+      } catch (err) {
+        console.error("user:check_online error:", err);
+      }
+    });
 
     // ---- JOIN CONVERSATION ----
     socket.on("chat:join_conversation", async (payload) => {
@@ -83,6 +141,13 @@ function initChatSocket(server) {
           conversationId,
           joined: true,
         });
+
+        // Auto-mark all unread messages as read (fire-and-forget)
+        chatService
+          .bulkMarkConversationRead(conversationId, socket.user._id)
+          .catch((err) =>
+            console.error("bulkMarkConversationRead error:", err)
+          );
       } catch (err) {
         console.error("chat:join_conversation error:", err);
         const msg =
@@ -292,8 +357,28 @@ function initChatSocket(server) {
       }
     });
 
-    socket.on("disconnect", () => {
+    // ---- DISCONNECT ----
+    socket.on("disconnect", async () => {
       console.log("🔌 Socket disconnected:", socket.id);
+
+      const userSockets = onlineUsers.get(userId);
+      if (userSockets) {
+        userSockets.delete(socket.id);
+        if (userSockets.size === 0) {
+          onlineUsers.delete(userId);
+          // Broadcast user:offline to all conversation rooms (best-effort)
+          (async () => {
+            try {
+              const rooms = await getUserConversationRooms(userId);
+              for (const room of rooms) {
+                io.to(room).emit("user:offline", { userId });
+              }
+            } catch {
+              // best-effort
+            }
+          })();
+        }
+      }
     });
   });
 

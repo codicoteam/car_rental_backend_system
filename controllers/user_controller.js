@@ -574,12 +574,57 @@ async function adminCreateUser(req, res) {
 }
 
 
+/**
+ * PATCH /api/v1/users/me/change-password
+ */
+async function changePassword(req, res) {
+  try {
+    const { current_password, new_password } = req.body;
+
+    if (!current_password || !new_password) {
+      return res.status(400).json({
+        success: false,
+        message: 'current_password and new_password are required',
+      });
+    }
+
+    if (new_password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'new_password must be at least 8 characters',
+      });
+    }
+
+    const User = require('../models/user_model');
+    const bcrypt = require('bcryptjs');
+
+    const user = await User.findById(req.user._id).select('+password_hash');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const valid = await bcrypt.compare(current_password, user.password_hash || '');
+    if (!valid) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    user.password_hash = await bcrypt.hash(new_password, 12);
+    await user.save();
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('changePassword error:', error);
+    res.status(500).json({ success: false, message: 'Failed to change password' });
+  }
+}
+
 module.exports = {
   registerUser,
   verifyEmail,
   loginUser,
   getProfile,
   updateProfile,
+  changePassword,
   getUsers,
   getUserById,
   updateUser,

@@ -269,6 +269,7 @@ async function updateReservationStatus(id, status) {
     "confirmed",
     "checked_out",
     "returned",
+    "closed",
     "cancelled",
     "no_show",
   ];
@@ -281,7 +282,10 @@ async function updateReservationStatus(id, status) {
 
   const reservation = await Reservation.findByIdAndUpdate(
     id,
-    { status },
+    {
+      status,
+      ...(status === "closed" ? { closed_at: new Date() } : {}),
+    },
     { new: true, runValidators: true }
   );
 
@@ -293,6 +297,102 @@ async function updateReservationStatus(id, status) {
   }
 
   return reservation;
+}
+
+/**
+ * Admin/manager: process vehicle return and record check condition.
+ * Sets status → 'returned' and populates vehicle_return.
+ */
+async function submitVehicleReturn(id, staffUserId, checkPayload = {}) {
+  const reservation = await Reservation.findById(id);
+  if (!reservation) {
+    const error = new Error("Reservation not found");
+    error.statusCode = 404;
+    error.code = "RESERVATION_NOT_FOUND";
+    throw error;
+  }
+
+  if (reservation.status !== "checked_out") {
+    const error = new Error(
+      `Cannot process return — booking is currently '${reservation.status}'. It must be 'checked_out'.`
+    );
+    error.statusCode = 400;
+    error.code = "RESERVATION_INVALID_STATE";
+    throw error;
+  }
+
+  const now = new Date();
+  reservation.status = "returned";
+  reservation.vehicle_return = {
+    returned_at: now,
+    submitted_by: staffUserId,
+    vehicle_check: {
+      fuel_level: checkPayload.fuel_level ?? "full",
+      cleanliness: checkPayload.cleanliness ?? "clean",
+      mileage_in: checkPayload.mileage_in ?? null,
+      damages_noted: checkPayload.damages_noted ?? false,
+      damage_description: checkPayload.damage_description ?? "",
+      damage_images: checkPayload.damage_images ?? [],
+      notes: checkPayload.notes ?? "",
+    },
+  };
+
+  await reservation.save();
+
+  return Reservation.findById(id)
+    .populate("user_id", "full_name email")
+    .populate("created_by", "full_name email")
+    .populate("vehicle_id")
+    .populate("vehicle_model_id")
+    .populate("pickup.branch_id")
+    .populate("dropoff.branch_id")
+    .populate("vehicle_return.submitted_by", "full_name email");
+}
+
+/**
+ * Admin/manager: close a booking.
+ * Status must be 'returned'. Payment must be 'paid' (waivable by admin via force flag).
+ */
+async function closeReservation(id, staffUserId, { force = false } = {}) {
+  const reservation = await Reservation.findById(id);
+  if (!reservation) {
+    const error = new Error("Reservation not found");
+    error.statusCode = 404;
+    error.code = "RESERVATION_NOT_FOUND";
+    throw error;
+  }
+
+  if (reservation.status !== "returned") {
+    const error = new Error(
+      `Cannot close — booking must be 'returned' first (currently '${reservation.status}').`
+    );
+    error.statusCode = 400;
+    error.code = "RESERVATION_INVALID_STATE";
+    throw error;
+  }
+
+  const paymentStatus = reservation.payment_summary?.status;
+  if (!force && paymentStatus !== "paid") {
+    const error = new Error(
+      "Cannot close — payment is not yet completed. Pass force=true to override."
+    );
+    error.statusCode = 400;
+    error.code = "RESERVATION_PAYMENT_PENDING";
+    throw error;
+  }
+
+  reservation.status = "closed";
+  reservation.closed_at = new Date();
+  await reservation.save();
+
+  return Reservation.findById(id)
+    .populate("user_id", "full_name email")
+    .populate("created_by", "full_name email")
+    .populate("vehicle_id")
+    .populate("vehicle_model_id")
+    .populate("pickup.branch_id")
+    .populate("dropoff.branch_id")
+    .populate("vehicle_return.submitted_by", "full_name email");
 }
 
 /**
@@ -314,5 +414,7 @@ module.exports = {
   updateReservation,
   deleteReservation,
   updateReservationStatus,
+  submitVehicleReturn,
+  closeReservation,
   checkVehicleAvailability,
 };

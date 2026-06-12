@@ -164,6 +164,58 @@ router.post(
   vehicleIncidentController.createVehicleIncident
 );
 
+/**
+ * @swagger
+ * /api/v1/vehicle-incidents/customer:
+ *   post:
+ *     summary: Customer reports an incident on their active (checked-out) booking
+ *     tags: [VehicleIncidents]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reservation_id, type, severity]
+ *             properties:
+ *               reservation_id:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [accident, scratch, tyre, windshield, mechanical_issue, other]
+ *               severity:
+ *                 type: string
+ *                 enum: [minor, major]
+ *               description:
+ *                 type: string
+ *               photos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               occurred_at:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       201:
+ *         description: Incident reported
+ *       400:
+ *         description: No active booking or validation error
+ *       403:
+ *         description: Booking does not belong to customer
+ *       404:
+ *         description: Reservation not found
+ */
+
+// Customer reports incident on their own active booking — must be before /:id
+router.post(
+  "/customer",
+  authMiddleware,
+  requireRoles("customer"),
+  vehicleIncidentController.createCustomerIncident
+);
+
 // List incidents (all auth users, no pagination)
 router.get(
   "/",

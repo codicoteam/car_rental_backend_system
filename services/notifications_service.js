@@ -17,6 +17,10 @@ function buildAudienceFilterForUser({ userId, roles = [] }) {
   };
 }
 
+// Alias used by listMine
+const buildMineAudienceFilter = (user) =>
+  buildAudienceFilterForUser({ userId: user._id, roles: user.roles || [] });
+
 /** LIST notifications delivered/visible to a specific user (no pagination) */
 async function listForUserById({
   userId,
@@ -238,6 +242,12 @@ async function sendNow(id) {
   doc.sent_at = new Date();
   if (!doc.send_at) doc.send_at = doc.sent_at;
   await doc.save();
+
+  // Best-effort dispatch — never let this failure break the sendNow response
+  dispatchNotification(doc).catch((err) => {
+    console.error("[NotificationsService] dispatchNotification error:", err);
+  });
+
   return doc;
 }
 
@@ -391,6 +401,84 @@ async function listCreatedByUserId({
     });
 }
 
+/**
+ * DISPATCH NOTIFICATION
+ * Determines target users based on audience scope and dispatches to each channel.
+ * All errors are caught internally — this function never throws.
+ *
+ * @param {object} doc - Mongoose notification document.
+ */
+async function dispatchNotification(doc) {
+  try {
+    const pushSvc = require('./push_notification_service');
+    const smsSvc = require('./sms_service');
+
+    // Determine target users
+    let targetUsers = [];
+    const scope = doc.audience && doc.audience.scope;
+
+    if (scope === 'all') {
+      targetUsers = await User.find({ status: 'active' }).select('email phone fcm_tokens');
+    } else if (scope === 'user' && doc.audience.user_id) {
+      const user = await User.findById(doc.audience.user_id).select('email phone fcm_tokens');
+      if (user) targetUsers = [user];
+    } else if (scope === 'roles' && Array.isArray(doc.audience.roles) && doc.audience.roles.length > 0) {
+      targetUsers = await User.find({
+        status: 'active',
+        roles: { $elemMatch: { $in: doc.audience.roles } },
+      }).select('email phone fcm_tokens');
+    }
+
+    if (targetUsers.length === 0) {
+      console.log('[DispatchNotification] No target users found for scope:', scope);
+      return;
+    }
+
+    const channels = Array.isArray(doc.channels) ? doc.channels : [];
+    const title = doc.title || 'MoRental';
+    const body = doc.message || '';
+    const notifData = {
+      notification_id: String(doc._id),
+      type: doc.type || 'info',
+    };
+    if (doc.action_url) notifData.action_url = doc.action_url;
+
+    for (const channel of channels) {
+      if (channel === 'push') {
+        // Collect all FCM tokens from target users
+        const allTokens = targetUsers.flatMap((u) =>
+          Array.isArray(u.fcm_tokens) ? u.fcm_tokens : []
+        );
+        if (allTokens.length > 0) {
+          try {
+            await pushSvc.sendToTokens(allTokens, { title, body, data: notifData });
+          } catch (pushErr) {
+            console.error('[DispatchNotification] Push error:', pushErr.message);
+          }
+        }
+      } else if (channel === 'sms') {
+        // Send SMS to each user that has a phone number
+        for (const user of targetUsers) {
+          if (user.phone) {
+            try {
+              await smsSvc.sendSms(user.phone, `${title}: ${body}`);
+            } catch (smsErr) {
+              console.error(`[DispatchNotification] SMS error for ${user.phone}:`, smsErr.message);
+            }
+          }
+        }
+      } else if (channel === 'email') {
+        // Email is already handled elsewhere — skip
+      } else if (channel === 'in_app') {
+        // in_app is handled by the mobile app polling /mine — no action needed here
+      }
+    }
+  } catch (err) {
+    console.error('[DispatchNotification] Unexpected error:', err);
+    // Never rethrow — this is best-effort
+  }
+}
+
 module.exports = {
   createNotification,
   listNotifications,
@@ -407,4 +495,5 @@ module.exports = {
   listAcknowledgements,
   listForUserById,
   listCreatedByUserId,
+  dispatchNotification,
 };
