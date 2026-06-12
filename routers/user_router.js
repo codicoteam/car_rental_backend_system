@@ -390,6 +390,76 @@ router.post("/forgot-password/reset", userController.forgotPasswordReset);
  */
 router.get("/", authMiddleware, userController.getUsers);
 
+// ── Change Password (must appear before /:id wildcard) ───────────────────────
+router.patch('/me/change-password', authMiddleware, userController.changePassword);
+
+// ── FCM Token Routes (must appear before /:id wildcard) ──────────────────────
+const fcmCtrl = require('../controllers/fcm_token_controller');
+
+/**
+ * @swagger
+ * /api/v1/users/fcm-token:
+ *   post:
+ *     summary: Register an FCM device token for push notifications
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "fcm-device-token-here"
+ *     responses:
+ *       200:
+ *         description: Token registered successfully
+ *       400:
+ *         description: Missing token
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post('/fcm-token', authMiddleware, fcmCtrl.register);
+
+/**
+ * @swagger
+ * /api/v1/users/fcm-token:
+ *   delete:
+ *     summary: Unregister an FCM device token
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "fcm-device-token-here"
+ *     responses:
+ *       200:
+ *         description: Token removed
+ *       400:
+ *         description: Missing token
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.delete('/fcm-token', authMiddleware, fcmCtrl.unregister);
+
 /**
  * @swagger
  * /api/v1/users/{id}:

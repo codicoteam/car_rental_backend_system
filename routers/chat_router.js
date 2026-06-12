@@ -17,6 +17,61 @@ const chatController = require("../controllers/chat_controller");
 
 /**
  * @swagger
+ * /api/v1/chats/contacts:
+ *   get:
+ *     summary: Get users this person can chat with (role-based)
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of contactable users
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+  "/contacts",
+  authMiddleware,
+  chatController.getContacts
+);
+
+/**
+ * @swagger
+ * /api/v1/chats/conversations/find-or-create:
+ *   post:
+ *     summary: Find or create a direct conversation with a participant
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - participant_id
+ *             properties:
+ *               participant_id:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Existing or newly created conversation
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Role-based chat not permitted
+ */
+router.post(
+  "/conversations/find-or-create",
+  authMiddleware,
+  chatController.findOrCreate
+);
+
+/**
+ * @swagger
  * /api/v1/chats/conversations:
  *   post:
  *     summary: Create a new chat conversation
@@ -64,17 +119,6 @@ router.post(
  *     responses:
  *       200:
  *         description: List of conversations
- *         content:
- *           application/json:
- *             schema:
- *               type: "object"
- *               properties:
- *                 success:
- *                   type: "boolean"
- *                 data:
- *                   type: "array"
- *                   items:
- *                     $ref: "#/components/schemas/ChatConversation"
  *       401:
  *         description: Unauthorized
  */
@@ -82,6 +126,34 @@ router.get(
   "/conversations",
   authMiddleware,
   chatController.getMyConversations
+);
+
+/**
+ * @swagger
+ * /api/v1/chats/conversations/{conversationId}/messages:
+ *   get:
+ *     summary: Get all messages in a conversation
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of messages in the conversation
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Conversation not found
+ */
+router.get(
+  "/conversations/:conversationId/messages",
+  authMiddleware,
+  chatController.getConversationMessages
 );
 
 /**
@@ -98,19 +170,9 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *         description: Conversation ID
  *     responses:
  *       200:
  *         description: Conversation details
- *         content:
- *           application/json:
- *             schema:
- *               type: "object"
- *               properties:
- *                 success:
- *                   type: "boolean"
- *                 data:
- *                   $ref: "#/components/schemas/ChatConversation"
  *       401:
  *         description: Unauthorized
  *       404:
@@ -140,15 +202,6 @@ router.get(
  *     responses:
  *       201:
  *         description: Message sent
- *         content:
- *           application/json:
- *             schema:
- *               type: "object"
- *               properties:
- *                 success:
- *                   type: "boolean"
- *                 data:
- *                   $ref: "#/components/schemas/ChatMessage"
  *       400:
  *         description: Validation error
  *       401:
@@ -158,46 +211,6 @@ router.post(
   "/messages",
   authMiddleware,
   chatController.sendMessage
-);
-
-/**
- * @swagger
- * /api/v1/chats/conversations/{conversationId}/messages:
- *   get:
- *     summary: Get all messages in a conversation
- *     tags: [Chat]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: conversationId
- *         required: true
- *         schema:
- *           type: string
- *         description: Conversation ID
- *     responses:
- *       200:
- *         description: List of messages in the conversation
- *         content:
- *           application/json:
- *             schema:
- *               type: "object"
- *               properties:
- *                 success:
- *                   type: "boolean"
- *                 data:
- *                   type: "array"
- *                   items:
- *                     $ref: "#/components/schemas/ChatMessage"
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Conversation not found
- */
-router.get(
-  "/conversations/:conversationId/messages",
-  authMiddleware,
-  chatController.getConversationMessages
 );
 
 /**
@@ -214,7 +227,6 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *         description: Message ID
  *     responses:
  *       200:
  *         description: Message read status updated
@@ -243,7 +255,6 @@ router.post(
  *         required: true
  *         schema:
  *           type: string
- *         description: Message ID
  *     responses:
  *       200:
  *         description: Message deleted

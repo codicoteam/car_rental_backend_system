@@ -1,8 +1,9 @@
 // controllers/chat_controller.js
 const chatService = require("../services/chat_service");
+const User = require("../models/user_model");
 
 /**
- * Create a new conversation.
+ * Create a new conversation (with role validation).
  */
 const createConversation = async (req, res) => {
   try {
@@ -38,11 +39,46 @@ const createConversation = async (req, res) => {
 };
 
 /**
- * Get all conversations for the authenticated user.
+ * Find or create a direct conversation between the authenticated user
+ * and the specified participant.
+ * POST /conversations/find-or-create
+ * Body: { participant_id }
+ */
+const findOrCreate = async (req, res) => {
+  try {
+    const { participant_id } = req.body;
+
+    if (!participant_id) {
+      return res.status(400).json({
+        success: false,
+        message: "participant_id is required.",
+      });
+    }
+
+    const conversation = await chatService.findOrCreateDirectConversation({
+      userId1: req.user._id,
+      userId2: participant_id,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: conversation,
+    });
+  } catch (error) {
+    console.error("findOrCreate error:", error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to find or create conversation.",
+    });
+  }
+};
+
+/**
+ * Get all conversations for the authenticated user (with participant details).
  */
 const getMyConversations = async (req, res) => {
   try {
-    const conversations = await chatService.getConversationsForUser(
+    const conversations = await chatService.getConversationsForUserPopulated(
       req.user._id
     );
 
@@ -191,12 +227,35 @@ const deleteMessage = async (req, res) => {
   }
 };
 
+/**
+ * Get contacts this user can chat with.
+ * GET /contacts
+ */
+const getContacts = async (req, res) => {
+  try {
+    const contacts = await chatService.getContactsForUser(req.user);
+
+    res.json({
+      success: true,
+      data: contacts,
+    });
+  } catch (error) {
+    console.error("getContacts error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch contacts.",
+    });
+  }
+};
+
 module.exports = {
   createConversation,
+  findOrCreate,
   getMyConversations,
   getConversationById,
   sendMessage,
   getConversationMessages,
   markMessageRead,
   deleteMessage,
+  getContacts,
 };

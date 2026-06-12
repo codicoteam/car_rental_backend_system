@@ -54,6 +54,9 @@ const UserSchema = new mongoose.Schema(
     reset_password_expires_at: { type: Date },
 
     auth_providers: { type: [AuthProviderSchema], default: [] },
+
+    // FCM tokens for push notifications (max 5 per user, dedup on insert)
+    fcm_tokens: { type: [String], default: [] },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );

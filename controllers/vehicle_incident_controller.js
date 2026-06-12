@@ -29,6 +29,19 @@ async function createVehicleIncident(req, res) {
   }
 }
 
+// POST /vehicle-incidents/customer  (customer reports incident on their active booking)
+async function createCustomerIncident(req, res) {
+  try {
+    const created = await vehicleIncidentService.createCustomerIncident(
+      req.user._id,
+      req.body
+    );
+    return res.status(201).json({ success: true, data: created });
+  } catch (error) {
+    return handleError(res, error);
+  }
+}
+
 // GET /vehicle-incidents
 async function getVehicleIncidents(req, res) {
   try {
@@ -178,6 +191,7 @@ async function deleteVehicleIncident(req, res) {
 
 module.exports = {
   createVehicleIncident,
+  createCustomerIncident,
   getVehicleIncidents,
   getVehicleIncidentById,
   getIncidentsByVehicle,

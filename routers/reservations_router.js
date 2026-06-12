@@ -256,7 +256,7 @@ router.delete("/:id", authMiddleware, reservationController.deleteReservation);
  *             properties:
  *               status:
  *                 type: string
- *                 enum: [pending, confirmed, checked_out, returned, cancelled, no_show]
+ *                 enum: [pending, confirmed, checked_out, returned, closed, cancelled, no_show]
  *                 example: confirmed
  *     responses:
  *       200:
@@ -274,6 +274,116 @@ router.patch(
   "/:id/status",
   authMiddleware,
   reservationController.updateReservationStatus
+);
+
+/**
+ * @swagger
+ * /api/v1/reservations/{id}/return:
+ *   post:
+ *     summary: Process vehicle return with condition check (staff only)
+ *     description: >
+ *       Marks booking as 'returned', records who submitted the vehicle and its condition.
+ *       Booking must currently be 'checked_out'.
+ *       Images should be uploaded to Supabase and passed as URL strings.
+ *     tags: [Reservations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fuel_level:
+ *                 type: string
+ *                 enum: [empty, quarter, half, three_quarter, full]
+ *                 example: three_quarter
+ *               cleanliness:
+ *                 type: string
+ *                 enum: [clean, dirty, very_dirty]
+ *                 example: clean
+ *               mileage_in:
+ *                 type: number
+ *                 example: 54320
+ *               damages_noted:
+ *                 type: boolean
+ *                 example: false
+ *               damage_description:
+ *                 type: string
+ *                 example: "Small scratch on rear bumper"
+ *               damage_images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example:
+ *                   - "https://hfbudnmvjbzvpefvtiuu.supabase.co/storage/v1/object/public/topics/damage1.jpg"
+ *               notes:
+ *                 type: string
+ *                 example: "Customer returned on time. Fuel slightly below full."
+ *     responses:
+ *       200:
+ *         description: Vehicle return processed
+ *       400:
+ *         description: Booking not in checked_out state
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Reservation not found
+ */
+router.post(
+  "/:id/return",
+  authMiddleware,
+  reservationController.submitVehicleReturn
+);
+
+/**
+ * @swagger
+ * /api/v1/reservations/{id}/close:
+ *   patch:
+ *     summary: Close a booking (staff only)
+ *     description: >
+ *       Marks booking as 'closed'. Booking must be 'returned'.
+ *       Payment must be 'paid' unless force=true is passed.
+ *     tags: [Reservations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               force:
+ *                 type: boolean
+ *                 description: "Set true to close even if payment is not yet complete"
+ *                 example: false
+ *     responses:
+ *       200:
+ *         description: Booking closed
+ *       400:
+ *         description: Not in returned state or payment not done (use force=true to override)
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Reservation not found
+ */
+router.patch(
+  "/:id/close",
+  authMiddleware,
+  reservationController.closeReservation
 );
 
 /**

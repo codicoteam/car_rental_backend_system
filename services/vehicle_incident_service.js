@@ -1,6 +1,7 @@
 // services/vehicle_incident_service.js
 const mongoose = require("mongoose");
 const VehicleIncident = require("../models/vehicle_incident_model");
+const Reservation = require("../models/reservations_model");
 
 function assertObjectId(id, fieldName = "id") {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -12,6 +13,65 @@ function assertObjectId(id, fieldName = "id") {
 
 async function createVehicleIncident(payload) {
   const incident = new VehicleIncident(payload);
+  try {
+    const saved = await incident.save();
+    return saved;
+  } catch (err) {
+    err.statusCode = 400;
+    throw err;
+  }
+}
+
+// Customer-facing: report an incident on their active (checked_out) booking.
+// vehicle_id and reported_by are derived server-side — not trusted from client.
+async function createCustomerIncident(userId, payload) {
+  const { reservation_id, type, severity, description, photos, occurred_at } = payload;
+
+  if (!reservation_id) {
+    const err = new Error("reservation_id is required");
+    err.statusCode = 400;
+    throw err;
+  }
+  assertObjectId(reservation_id, "reservation_id");
+
+  const reservation = await Reservation.findById(reservation_id);
+  if (!reservation) {
+    const err = new Error("Reservation not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (reservation.user_id.toString() !== userId.toString()) {
+    const err = new Error("You can only report incidents on your own bookings");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  if (reservation.status !== "checked_out") {
+    const err = new Error("You can only report incidents on an active (checked-out) booking");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (!reservation.vehicle_id) {
+    const err = new Error("No vehicle is assigned to this reservation");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const incidentData = {
+    vehicle_id: reservation.vehicle_id,
+    reservation_id: reservation._id,
+    reported_by: userId,
+    branch_id: reservation.pickup?.branch_id ?? null,
+    type,
+    severity,
+    description,
+    photos: photos ?? [],
+    occurred_at: occurred_at ?? new Date(),
+  };
+
+  const incident = new VehicleIncident(incidentData);
   try {
     const saved = await incident.save();
     return saved;
@@ -203,6 +263,7 @@ async function deleteVehicleIncident(id) {
 
 module.exports = {
   createVehicleIncident,
+  createCustomerIncident,
   listVehicleIncidents,
   getVehicleIncidentById,
   getIncidentsByVehicle,

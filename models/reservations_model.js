@@ -38,6 +38,36 @@ const DiscountLineSchema = new Schema(
   { _id: false }
 );
 
+const VehicleCheckSchema = new Schema(
+  {
+    fuel_level: {
+      type: String,
+      enum: ["empty", "quarter", "half", "three_quarter", "full"],
+      default: "full",
+    },
+    cleanliness: {
+      type: String,
+      enum: ["clean", "dirty", "very_dirty"],
+      default: "clean",
+    },
+    mileage_in: { type: Number, default: null },
+    damages_noted: { type: Boolean, default: false },
+    damage_description: { type: String, trim: true, default: "" },
+    damage_images: { type: [String], default: [] },
+    notes: { type: String, trim: true, default: "" },
+  },
+  { _id: false }
+);
+
+const VehicleReturnSchema = new Schema(
+  {
+    returned_at: { type: Date, default: null },
+    submitted_by: { type: ObjectId, ref: "User", default: null },
+    vehicle_check: { type: VehicleCheckSchema, default: () => ({}) },
+  },
+  { _id: false }
+);
+
 const PricingSchema = new Schema(
   {
     currency: { type: String, enum: ["USD", "ZWL"], required: true },
@@ -125,12 +155,16 @@ const ReservationSchema = new Schema(
         "confirmed",
         "checked_out",
         "returned",
+        "closed",
         "cancelled",
         "no_show",
       ],
       default: "pending",
       index: true,
     },
+
+    vehicle_return: { type: VehicleReturnSchema, default: null },
+    closed_at: { type: Date, default: null },
 
     // pricing snapshot (immutable)
     pricing: { type: PricingSchema, required: true },
