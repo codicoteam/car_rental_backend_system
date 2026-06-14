@@ -318,7 +318,9 @@ async function updateReservationStatus(id, status) {
     "pending",
     "confirmed",
     "checked_out",
+    "checked_in",
     "returned",
+    "completed",
     "closed",
     "cancelled",
     "no_show",
@@ -372,7 +374,7 @@ async function submitVehicleReturn(id, staffUserId, checkPayload = {}) {
   }
 
   const now = new Date();
-  reservation.status = "returned";
+  reservation.status = "checked_in";
   reservation.vehicle_return = {
     returned_at: now,
     submitted_by: staffUserId,
@@ -412,9 +414,9 @@ async function closeReservation(id, staffUserId, { force = false } = {}) {
     throw error;
   }
 
-  if (reservation.status !== "returned") {
+  if (reservation.status !== "checked_in" && reservation.status !== "returned") {
     const error = new Error(
-      `Cannot close — booking must be 'returned' first (currently '${reservation.status}').`
+      `Cannot close — booking must be 'checked_in' first (currently '${reservation.status}').`
     );
     error.statusCode = 400;
     error.code = "RESERVATION_INVALID_STATE";
