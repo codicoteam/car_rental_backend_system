@@ -1,5 +1,7 @@
 // services/reservations_service.js
 const Reservation = require("../models/reservations_model");
+const User = require("../models/user_model");
+const { Profile } = require("../models/profile_models");
 const { sendEmail } = require("../utils/user_email_utils"); // <-- use your email service
 
 /**
@@ -138,16 +140,54 @@ async function sendReservationCreatedEmails(reservation) {
   }
 }
 /**
+ * Build a driver_snapshot from the customer's User + Profile records.
+ * Returns undefined if neither record has useful data (safe to omit from doc).
+ */
+async function buildDriverSnapshot(customerUserId) {
+  const [user, profile] = await Promise.all([
+    User.findById(customerUserId).select("full_name email phone"),
+    Profile.findOne({ user: customerUserId, role: "customer" }).select(
+      "full_name driver_license"
+    ),
+  ]);
+
+  if (!user) return undefined;
+
+  const dl = profile?.driver_license;
+  return {
+    full_name: user.full_name,
+    email: user.email,
+    phone: user.phone ?? undefined,
+    ...(dl
+      ? {
+          driver_license: {
+            number: dl.number,
+            country: dl.country,
+            class: dl.class,
+            expires_at: dl.expires_at,
+            verified: dl.verified ?? false,
+          },
+        }
+      : {}),
+  };
+}
+
+/**
  * Create reservation.
  * - createdById: user who created the reservation
  * - customerUserId: the renter (user_id)
  */
 async function createReservation(createdById, customerUserId, payload) {
   try {
+    // Auto-populate driver_snapshot unless the caller already provided one
+    const snapshot =
+      payload.driver_snapshot ?? (await buildDriverSnapshot(customerUserId));
+
     const data = {
       ...payload,
       created_by: createdById,
       user_id: customerUserId,
+      driver_snapshot: snapshot,
     };
 
     const reservation = await Reservation.create(data);
