@@ -656,11 +656,22 @@ async function getPaymentById(id) {
   }
   return p;
 }
-async function listPayments({ userId, status }) {
+async function listPayments({ userId, status, branchId }) {
   const q = {};
 
   if (userId) q.user_id = userId;
   if (status) q.paymentStatus = status;
+
+  if (branchId) {
+    const Reservation = require("../models/reservations_model");
+    const reservations = await Reservation.find({
+      $or: [
+        { "pickup.branch_id": branchId },
+        { "dropoff.branch_id": branchId },
+      ],
+    }).select("_id");
+    q.reservation_id = { $in: reservations.map((r) => r._id) };
+  }
 
   const items = await Payment.find(q)
     .sort({ created_at: -1 })
