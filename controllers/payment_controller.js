@@ -139,12 +139,13 @@ module.exports = {
   // GET /
   list: async (req, res) => {
     try {
-      const { status, mine } = req.query;
+      const { status, mine, branch_id } = req.query;
       const userId = mine === "true" ? req.user._id : undefined;
 
       const result = await paymentService.listPayments({
         userId,
         status,
+        branchId: branch_id || undefined,
       });
 
       res.json({ success: true, ...result });

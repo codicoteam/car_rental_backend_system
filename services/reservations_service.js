@@ -17,6 +17,8 @@ function buildReservationFilter(query = {}) {
     pickup_to,
     dropoff_from,
     dropoff_to,
+    pickup_branch_id,
+    dropoff_branch_id,
   } = query;
 
   const filter = {};
@@ -55,6 +57,14 @@ function buildReservationFilter(query = {}) {
     filter["dropoff.at"] = {};
     if (dropoff_from) filter["dropoff.at"].$gte = new Date(dropoff_from);
     if (dropoff_to) filter["dropoff.at"].$lte = new Date(dropoff_to);
+  }
+
+  if (pickup_branch_id) {
+    filter["pickup.branch_id"] = pickup_branch_id;
+  }
+
+  if (dropoff_branch_id) {
+    filter["dropoff.branch_id"] = dropoff_branch_id;
   }
 
   return filter;
