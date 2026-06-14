@@ -310,6 +310,32 @@ router.delete("/:id", authMiddleware, ctrl.disable);
  *       200:
  *         description: Acknowledged
  */
+/**
+ * @swagger
+ * /api/v1/notifications/bulk/read:
+ *   post:
+ *     summary: Bulk mark notifications as read for the current user
+ *     tags: [Notifications]
+ *     security: [ { bearerAuth: [] } ]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ids]
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items: { type: string }
+ *     responses:
+ *       200:
+ *         description: Count of items updated
+ */
+// IMPORTANT: /bulk/read must be registered before /:id/read to avoid Express
+// matching "bulk" as the :id parameter.
+router.post("/bulk/read", authMiddleware, ctrl.bulkRead);
+
 router.post("/:id/read", authMiddleware, ctrl.ackRead);
 
 /**
@@ -337,30 +363,6 @@ router.post("/:id/read", authMiddleware, ctrl.ackRead);
  *         description: Action recorded
  */
 router.post("/:id/action", authMiddleware, ctrl.ackAction);
-
-/**
- * @swagger
- * /api/v1/notifications/bulk/read:
- *   post:
- *     summary: Bulk mark notifications as read for the current user
- *     tags: [Notifications]
- *     security: [ { bearerAuth: [] } ]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [ids]
- *             properties:
- *               ids:
- *                 type: array
- *                 items: { type: string }
- *     responses:
- *       200:
- *         description: Count of items updated
- */
-router.post("/bulk/read", authMiddleware, ctrl.bulkRead);
 
 /**
  * @swagger

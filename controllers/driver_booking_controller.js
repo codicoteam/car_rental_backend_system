@@ -1,5 +1,6 @@
 // controllers/driver_booking_controller.js
 const bookingService = require("../services/driver_booking_service");
+const notifHelper = require("../services/notification_helper");
 
 /**
  * Customer/Agent: create a driver booking
@@ -126,6 +127,21 @@ async function driverRespond(req, res) {
       req.params.id,
       action
     );
+    // Notify the customer of the driver's response
+    if (booking.customer_id) {
+      const accepted = action === 'accept';
+      notifHelper.sendToUser({
+        userId: booking.customer_id,
+        title: accepted ? 'Driver Accepted Your Request' : 'Driver Declined Your Request',
+        message: accepted
+          ? 'Great news! Your driver has accepted your booking request. Please proceed to payment to confirm.'
+          : 'Your driver booking request was declined. You can browse other available drivers.',
+        type: 'booking',
+        channels: ['in_app', 'push'],
+        actionUrl: '/driver-bookings',
+      });
+    }
+
     return res.json({
       success: true,
       message: `Driver booking ${action}ed successfully.`,
