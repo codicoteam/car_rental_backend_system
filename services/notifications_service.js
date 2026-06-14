@@ -412,6 +412,7 @@ async function dispatchNotification(doc) {
   try {
     const pushSvc = require('./push_notification_service');
     const smsSvc = require('./sms_service');
+    const emailUtils = require('../utils/user_email_utils');
 
     // Determine target users
     let targetUsers = [];
@@ -468,7 +469,20 @@ async function dispatchNotification(doc) {
           }
         }
       } else if (channel === 'email') {
-        // Email is already handled elsewhere — skip
+        for (const user of targetUsers) {
+          if (user.email) {
+            try {
+              const emailHtml = emailUtils.generateEmailTemplate({ title, message: body });
+              await emailUtils.sendEmail({
+                to: user.email,
+                subject: title,
+                html: emailHtml,
+              });
+            } catch (emailErr) {
+              console.error(`[DispatchNotification] Email error for ${user.email}:`, emailErr.message);
+            }
+          }
+        }
       } else if (channel === 'in_app') {
         // in_app is handled by the mobile app polling /mine — no action needed here
       }

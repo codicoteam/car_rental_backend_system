@@ -8,8 +8,17 @@ const Vehicle = require("../models/vehicle_unit_model");
 const VehicleIncident = require("../models/vehicle_incident_model");
 const ServiceOrder = require("../models/service_order_model");
 const ServiceSchedule = require("../models/service_schedule_model");
+const User = require("../models/user_model");
+const DriverBooking = require("../models/driver_booking_model");
 
 const { ManagerProfile } = require("../models/profile_models"); // exports discriminators
+
+// Convert MongoDB Decimal128 to a plain JS float for JSON serialisation
+function dec128ToFloat(val) {
+  if (val == null) return 0;
+  if (typeof val === "number") return val;
+  try { return parseFloat(val.toString()) || 0; } catch { return 0; }
+}
 
 // ---------- helpers ----------
 function toObjectId(id) {
@@ -114,6 +123,8 @@ async function getAdminDashboard(query = {}) {
     openServiceOrders,
     dueServiceSchedules,
     totalDriversBookingsCount,
+    totalCustomers,
+    completedReservations,
   ] = await Promise.all([
     Branch.countDocuments({ active: true }),
     Vehicle.countDocuments({}),
@@ -122,12 +133,10 @@ async function getAdminDashboard(query = {}) {
     Reservation.countDocuments({ status: { $in: ["pending", "confirmed", "checked_out"] } }),
     VehicleIncident.countDocuments({ status: { $in: ["open", "under_review"] } }),
     ServiceOrder.countDocuments({ status: { $in: ["open", "in_progress"] } }),
-    ServiceSchedule.countDocuments({
-      next_due_at: { $ne: null, $lte: to },
-    }),
-    // driver bookings model might be in your project; if it is, uncomment and use it
-    // DriverBooking.countDocuments({ created_at: { $gte: from, $lte: to } }),
-    Promise.resolve(null),
+    ServiceSchedule.countDocuments({ next_due_at: { $ne: null, $lte: to } }),
+    DriverBooking.countDocuments({ created_at: { $gte: from, $lte: to } }).catch(() => 0),
+    User.countDocuments({ roles: { $in: ["customer"] }, status: "active" }).catch(() => 0),
+    Reservation.countDocuments({ created_at: { $gte: from, $lte: to }, status: "returned" }).catch(() => 0),
   ]);
 
   // Pie: reservations by status (NO $function)
@@ -207,12 +216,46 @@ async function getAdminDashboard(query = {}) {
     { $project: { _id: 0, label: "$_id", value: 1 } },
   ]);
 
-  // Optional extra KPI: total revenue paid in range
+  // Total revenue paid in range
   const totalRevenueAgg = await Payment.aggregate([
     { $match: { boughtAt: { $gte: from, $lte: to }, paymentStatus: "paid" } },
     { $group: { _id: null, total: { $sum: "$amount" } } },
   ]);
   const totalRevenue = totalRevenueAgg?.[0]?.total ?? null;
+
+  // MoM growth: compare revenue in [from→to] vs equal prior period
+  const periodMs = to.getTime() - from.getTime();
+  const prevFrom = new Date(from.getTime() - periodMs);
+  const prevRevenueAgg = await Payment.aggregate([
+    { $match: { boughtAt: { $gte: prevFrom, $lt: from }, paymentStatus: "paid" } },
+    { $group: { _id: null, total: { $sum: "$amount" } } },
+  ]);
+  const currentRevFloat = dec128ToFloat(totalRevenue);
+  const prevRevFloat = dec128ToFloat(prevRevenueAgg?.[0]?.total);
+  const momGrowth = prevRevFloat > 0
+    ? parseFloat(((currentRevFloat - prevRevFloat) / prevRevFloat * 100).toFixed(1))
+    : null;
+
+  // Avg rental duration in days
+  const avgDurationAgg = await Reservation.aggregate([
+    { $match: { created_at: { $gte: from, $lte: to }, "pickup.at": { $ne: null }, "dropoff.at": { $ne: null } } },
+    {
+      $project: {
+        duration_days: {
+          $divide: [{ $subtract: ["$dropoff.at", "$pickup.at"] }, 1000 * 60 * 60 * 24],
+        },
+      },
+    },
+    { $group: { _id: null, avg: { $avg: "$duration_days" } } },
+  ]).catch(() => []);
+  const avgRentalDays = avgDurationAgg?.[0]?.avg
+    ? parseFloat(avgDurationAgg[0].avg.toFixed(1))
+    : null;
+
+  // Completion rate
+  const completionRate = totalReservations > 0
+    ? parseFloat(((completedReservations / totalReservations) * 100).toFixed(1))
+    : 0;
 
   return {
     range: { from, to },
@@ -225,8 +268,14 @@ async function getAdminDashboard(query = {}) {
       open_or_review_incidents: openIncidents,
       open_or_in_progress_services: openServiceOrders,
       due_service_schedules_by_date: dueServiceSchedules,
-      driver_bookings_in_range: totalDriversBookingsCount, // null if not wired
-      total_revenue_paid_in_range: totalRevenue, // Decimal128
+      driver_bookings_in_range: totalDriversBookingsCount,
+      total_revenue_paid_in_range: currentRevFloat,
+    },
+    additional_stats: {
+      total_customers: totalCustomers,
+      completion_rate: completionRate,
+      avg_rental_duration_days: avgRentalDays,
+      mom_revenue_growth: momGrowth,
     },
     charts: {
       pie: {
@@ -239,14 +288,14 @@ async function getAdminDashboard(query = {}) {
         })),
         revenue_per_day: revenuePerDayAgg.map((x) => ({
           date: x._id,
-          value: x.total, // Decimal128
+          value: dec128ToFloat(x.total),
           count: x.count,
         })),
       },
       bars: {
         revenue_by_branch: revenueByBranchAgg.map((x) => ({
           label: x.label,
-          value: x.total, // Decimal128
+          value: dec128ToFloat(x.total),
           count: x.count,
           branch_id: x.branch_id,
         })),
