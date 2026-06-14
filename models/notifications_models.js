@@ -27,7 +27,7 @@ const AudienceSchema = new Schema(
     },
     roles: {
       type: [String],
-      enum: ["customer", "agent", "manager", "admin", "driver"],
+      enum: ["customer", "agent", "manager", "branch_receptionist", "executive_admin", "admin", "driver"],
       default: undefined, // required non-empty when scope === "roles"
     },
   },

@@ -4,6 +4,7 @@ const Payment = require("../models/payment_model");
 const Reservation = require("../models/reservations_model");
 const PromoCode = require("../models/promo_code_model");
 const User = require("../models/user_model"); // Add User model import
+const notifHelper = require("./notification_helper");
 
 // Paynow SDK
 const { Paynow } = require("paynow");
@@ -448,6 +449,32 @@ async function pollStatus({ paymentId, pollUrl }) {
         "payment_summary.outstanding": mongoose.Types.Decimal128.fromString("0.00"),
         "payment_summary.last_payment_at": new Date(),
       });
+    }
+
+    // Fire-and-forget payment confirmation notification
+    if (newStatus === "paid" && payment.user_id) {
+      const amountNum = parseFloat(payment.amount?.toString() || '0').toFixed(2);
+      const currency = payment.currency || 'USD';
+
+      if (payment.reservation_id) {
+        notifHelper.sendToUser({
+          userId: payment.user_id,
+          title: 'Payment Received',
+          message: `Your payment of ${currency} ${amountNum} has been received. Your booking is confirmed and ready.`,
+          type: 'payment',
+          channels: ['in_app', 'push'],
+          actionUrl: '/reservations',
+        });
+      } else if (payment.driver_booking_id) {
+        notifHelper.sendToUser({
+          userId: payment.user_id,
+          title: 'Driver Booking Payment Received',
+          message: `Your driver booking payment of ${currency} ${amountNum} has been received.`,
+          type: 'payment',
+          channels: ['in_app', 'push'],
+          actionUrl: '/driver-bookings',
+        });
+      }
     }
   }
 

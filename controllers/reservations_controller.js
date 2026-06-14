@@ -1,5 +1,6 @@
 // controllers/reservations_controller.js
 const reservationService = require("../services/reservations_service");
+const notifHelper = require("../services/notification_helper");
 
 function hasRole(user, role) {
   return Array.isArray(user.roles) && user.roles.includes(role);
@@ -32,6 +33,18 @@ async function createReservation(req, res) {
       customerUserId,
       body
     );
+
+    // Fire-and-forget: booking confirmation in-app + push notification
+    const vehicleName = reservation.vehicle_model_id?.name || 'your vehicle';
+    const customerId = reservation.user_id?._id || reservation.user_id;
+    notifHelper.sendToUser({
+      userId: customerId,
+      title: 'Booking Confirmed',
+      message: `Your booking for ${vehicleName} has been confirmed. Please proceed to payment to secure your reservation.`,
+      type: 'booking',
+      channels: ['in_app', 'push'],
+      actionUrl: '/reservations',
+    });
 
     return res.status(201).json({
       success: true,
