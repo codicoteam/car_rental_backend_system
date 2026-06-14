@@ -9,7 +9,7 @@ const AuditLog = require("../models/audit_log_model");
 const Reservation = require("../models/reservations_model");
 const Payment = require("../models/payment_model");
 const DriverBooking = require("../models/driver_booking_model");
-const Profile = require("../models/profile_models");
+const { Profile } = require("../models/profile_models");
 
 const staffOrAdmin = requireRoles("manager", "branch_receptionist", "executive_admin", "admin");
 
@@ -122,9 +122,9 @@ router.get(
         // Active reservations
         Reservation.countDocuments({ user_id: userId, status: { $in: ["confirmed", "checked_out"] } }),
         // Cancelled
-        Reservation.countDocuments({ user_id: userId, status: "cancelled" }),
-        // Completed
-        Reservation.countDocuments({ user_id: userId, status: "completed" }),
+        Reservation.countDocuments({ user_id: userId, status: { $in: ["cancelled", "no_show"] } }),
+        // Completed (returned/closed)
+        Reservation.countDocuments({ user_id: userId, status: { $in: ["returned", "closed"] } }),
         // Paid payments aggregate
         Payment.aggregate([
           { $match: { user_id: userId, paymentStatus: "paid" } },
