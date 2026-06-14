@@ -8,8 +8,8 @@ const {
   requireRoles,
 } = require("../middlewares/auth_middleware");
 
-// Manager / Admin middleware
-const managerOrAdmin = requireRoles("manager", "admin");
+// Manager / Branch Receptionist / Admin middleware
+const managerOrAdmin = requireRoles("manager", "branch_receptionist", "admin");
 
 /**
  * @swagger
@@ -23,7 +23,7 @@ const managerOrAdmin = requireRoles("manager", "admin");
  * /api/v1/vehicle-models:
  *   post:
  *     summary: Create a new vehicle model
- *     description: Only manager or admin can create vehicle models.
+ *     description: Only manager, branch_receptionist, or admin can create vehicle models.
  *     tags: [VehicleModels]
  *     security:
  *       - bearerAuth: []
@@ -227,7 +227,7 @@ router.get("/:id", vehicleController.getVehicleModelById);
  * /api/v1/vehicle-models/{id}:
  *   patch:
  *     summary: Update a vehicle model
- *     description: Only manager or admin can update vehicle models.
+ *     description: Only manager, branch_receptionist, or admin can update vehicle models.
  *     tags: [VehicleModels]
  *     security:
  *       - bearerAuth: []
@@ -269,7 +269,7 @@ router.patch(
  * /api/v1/vehicle-models/{id}:
  *   delete:
  *     summary: Delete a vehicle model
- *     description: Only manager or admin can delete vehicle models.
+ *     description: Only manager, branch_receptionist, or admin can delete vehicle models.
  *     tags: [VehicleModels]
  *     security:
  *       - bearerAuth: []

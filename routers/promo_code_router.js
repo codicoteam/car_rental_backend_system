@@ -8,7 +8,8 @@ const {
   requireRoles,
 } = require("../middlewares/auth_middleware");
 
-const managerOrAdmin = requireRoles("manager", "admin");
+const managerOrAdmin = requireRoles("manager", "branch_receptionist", "admin");
+const managerOrAdminOrExec = requireRoles("manager", "branch_receptionist", "executive_admin", "admin");
 const adminOnly = requireRoles("admin");
 
 /**
@@ -23,7 +24,7 @@ const adminOnly = requireRoles("admin");
  * /api/v1/promo-codes:
  *   post:
  *     summary: Create a promo code
- *     description: Only manager/admin can create promo codes.
+ *     description: Only manager, branch_receptionist, or admin can create promo codes.
  *     tags: [PromoCodes]
  *     security:
  *       - bearerAuth: []
@@ -113,7 +114,9 @@ router.post(
  * /api/v1/promo-codes:
  *   get:
  *     summary: Get all promo codes (management)
- *     description: Only manager/admin can list all promo codes.
+ *     description: >
+ *       Lists all promo codes in the system.
+ *       Accessible by manager, branch_receptionist, admin, and executive_admin (read-only).
  *     tags: [PromoCodes]
  *     security:
  *       - bearerAuth: []
@@ -139,7 +142,7 @@ router.post(
 router.get(
   "/",
   authMiddleware,
-  managerOrAdmin,
+  managerOrAdminOrExec,
   promoController.getAllPromoCodes
 );
 
@@ -147,7 +150,7 @@ router.get(
  * @swagger
  * /api/v1/promo-codes/{id}:
  *   get:
- *     summary: Get a promo code by ID (management)
+ *     summary: Get a promo code by ID (management / executive view)
  *     tags: [PromoCodes]
  *     security:
  *       - bearerAuth: []
@@ -171,7 +174,7 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
-  managerOrAdmin,
+  managerOrAdminOrExec,
   promoController.getPromoCodeById
 );
 
@@ -239,7 +242,7 @@ router.get("/active", promoController.getActivePromoCodes);
  * /api/v1/promo-codes/{id}:
  *   patch:
  *     summary: Update a promo code
- *     description: Only manager/admin can update promo codes.
+ *     description: Only manager, branch_receptionist, or admin can update promo codes.
  *     tags: [PromoCodes]
  *     security:
  *       - bearerAuth: []

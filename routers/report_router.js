@@ -56,7 +56,11 @@ const {
  * @openapi
  * /api/v1/reports/admin:
  *   get:
- *     summary: Admin reports (global or optionally filtered by branch)
+ *     summary: Admin / Executive Admin global reports
+ *     description: >
+ *       Returns paginated report data covering the entire business (all branches).
+ *       Accessible by **admin** and **executive_admin** (read-only).
+ *       The `type` parameter selects the dataset; `branch_id` can optionally scope results to one branch.
  *     tags:
  *       - Reports
  *     security:
@@ -64,6 +68,7 @@ const {
  *     parameters:
  *       - in: query
  *         name: type
+ *         required: true
  *         schema:
  *           type: string
  *           enum:
@@ -72,29 +77,40 @@ const {
  *             - incidents
  *             - fleet
  *             - services
+ *         description: >
+ *           Report dataset to generate:
+ *           `reservations` – full booking list with status,
+ *           `payments` – payment transactions,
+ *           `incidents` – vehicle incidents,
+ *           `fleet` – fleet status snapshot,
+ *           `services` – service orders.
  *         example: reservations
  *       - in: query
  *         name: from
  *         schema:
  *           type: string
  *           format: date
+ *         description: "Start date (ISO, e.g. 2025-12-01). Defaults to last 30 days."
  *         example: "2025-12-01"
  *       - in: query
  *         name: to
  *         schema:
  *           type: string
  *           format: date
+ *         description: "End date (ISO, e.g. 2025-12-31). Defaults to today."
  *         example: "2025-12-30"
  *       - in: query
  *         name: branch_id
  *         schema:
  *           type: string
- *         description: "Optional: admin can filter for a single branch"
+ *         description: "Optional – filter results to a single branch."
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
  *           minimum: 1
+ *           default: 1
+ *         description: "Page number."
  *         example: 1
  *       - in: query
  *         name: limit
@@ -102,23 +118,25 @@ const {
  *           type: integer
  *           minimum: 1
  *           maximum: 200
+ *           default: 25
+ *         description: "Rows per page (max 200)."
  *         example: 25
  *     responses:
  *       200:
- *         description: Report data
+ *         description: Report data with rows, columns, summary, and paging metadata
  *         content:
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/ReportResponse"
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized – missing or invalid Bearer token
  *       403:
- *         description: Forbidden
+ *         description: Forbidden – requires admin or executive_admin role
  */
 router.get(
   "/admin",
   authMiddleware,
-  adminMiddleware,
+  requireRoles("admin", "executive_admin"),
   reportController.getAdminReport
 );
 
@@ -126,7 +144,11 @@ router.get(
  * @openapi
  * /api/v1/reports/manager:
  *   get:
- *     summary: Manager reports (scoped to manager branch_ids)
+ *     summary: Branch manager / receptionist reports (scoped to branch)
+ *     description: >
+ *       Returns paginated report data scoped to the branches this manager or receptionist is assigned to.
+ *       Accessible by users with role **manager** or **branch_receptionist**.
+ *       The `type` parameter selects the report dataset; `branch_id` can optionally narrow results to one branch within the allowed scope.
  *     tags:
  *       - Reports
  *     security:
@@ -134,6 +156,7 @@ router.get(
  *     parameters:
  *       - in: query
  *         name: type
+ *         required: true
  *         schema:
  *           type: string
  *           enum:
@@ -142,29 +165,40 @@ router.get(
  *             - incidents
  *             - fleet
  *             - services
+ *         description: >
+ *           Report type to generate:
+ *           `reservations` – booking list with status,
+ *           `payments` – payment transactions,
+ *           `incidents` – vehicle incidents,
+ *           `fleet` – fleet status snapshot,
+ *           `services` – service orders.
  *         example: reservations
  *       - in: query
  *         name: from
  *         schema:
  *           type: string
  *           format: date
+ *         description: "Start date (ISO, e.g. 2025-12-01). Defaults to last 30 days."
  *         example: "2025-12-01"
  *       - in: query
  *         name: to
  *         schema:
  *           type: string
  *           format: date
+ *         description: "End date (ISO, e.g. 2025-12-31). Defaults to today."
  *         example: "2025-12-30"
  *       - in: query
  *         name: branch_id
  *         schema:
  *           type: string
- *         description: "Optional: manager can filter within their own branch scope"
+ *         description: "Optional – filter results to a single branch within the caller's allowed scope."
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
  *           minimum: 1
+ *           default: 1
+ *         description: "Page number for paginated results."
  *         example: 1
  *       - in: query
  *         name: limit
@@ -172,23 +206,25 @@ router.get(
  *           type: integer
  *           minimum: 1
  *           maximum: 200
+ *           default: 25
+ *         description: "Number of rows per page (max 200)."
  *         example: 25
  *     responses:
  *       200:
- *         description: Report data
+ *         description: Report data with rows, columns, summary, and paging metadata
  *         content:
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/ReportResponse"
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized – missing or invalid Bearer token
  *       403:
- *         description: Forbidden
+ *         description: Forbidden – requires manager or branch_receptionist role
  */
 router.get(
   "/manager",
   authMiddleware,
-  requireRoles("manager"),
+  requireRoles("manager", "branch_receptionist"),
   reportController.getManagerReport
 );
 

@@ -1,5 +1,6 @@
 // controllers/profile_controller.js
 const profileService = require("../services/profile_service");
+const auditService = require("../services/audit_service");
 
 /**
  * Helper: check if current user is manager or admin
@@ -279,6 +280,18 @@ async function updateProfile(req, res) {
       req.body
     );
 
+    auditService.log({
+      user_id: profile.user,
+      actor_id: req.user._id,
+      action: "profile_updated",
+      entity_type: "profile",
+      entity_id: updated._id,
+      description: `${profile.role} profile updated`,
+      metadata: { fields: Object.keys(req.body) },
+      ip_address: req.ip,
+      user_agent: req.headers["user-agent"],
+    });
+
     return res.json({
       success: true,
       message: "Profile updated successfully",
@@ -332,19 +345,11 @@ async function getProfilesByUserId(req, res) {
 
     const profiles = await profileService.getProfilesByUserId(userId);
 
-    // Optional: return 404 if none
-    if (!profiles || profiles.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No profiles found for this user",
-      });
-    }
-
     return res.json({
       success: true,
       data: {
-        profiles,
-        total: profiles.length,
+        profiles: profiles || [],
+        total: profiles ? profiles.length : 0,
       },
     });
   } catch (error) {
@@ -358,11 +363,44 @@ async function getProfilesByUserId(req, res) {
 
 
 
+async function createBranchReceptionistByStaff(req, res) {
+  try {
+    const { target_user_id, ...data } = req.body;
+
+    if (!target_user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "target_user_id is required",
+      });
+    }
+
+    const profile = await profileService.createBranchReceptionistProfileByStaff(
+      req.user._id,
+      target_user_id,
+      data
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Branch receptionist profile created successfully",
+      data: profile,
+    });
+  } catch (error) {
+    console.error("createBranchReceptionistByStaff error:", error);
+    const status = /Forbidden/.test(error.message) ? 403 : 400;
+    return res.status(status).json({
+      success: false,
+      message: error.message || "Failed to create branch receptionist profile",
+    });
+  }
+}
+
 module.exports = {
   createSelfProfile,
   createCustomerByStaff,
   createAgentByStaff,
   createManagerByStaff,
+  createBranchReceptionistByStaff,
   getMyProfileByRole,
   listProfiles,
   getProfileById,

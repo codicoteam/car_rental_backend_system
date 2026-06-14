@@ -9,14 +9,14 @@ const {
 } = require("../middlewares/auth_middleware");
 
 // role helpers
-const agentManagerAdmin = requireRoles("agent", "manager", "admin");
-const managerAdmin = requireRoles("manager", "admin");
+const agentManagerAdmin = requireRoles("agent", "manager", "branch_receptionist", "admin");
+const managerAdmin = requireRoles("manager", "branch_receptionist", "admin");
 
 /**
  * @swagger
  * tags:
  *   name: Profiles
- *   description: User profile operations (customer / agent / manager / admin)
+ *   description: User profile operations (customer / agent / manager / branch_receptionist / admin)
  */
 
 /**
@@ -39,7 +39,8 @@ const managerAdmin = requireRoles("manager", "admin");
  *             properties:
  *               role:
  *                 type: string
- *                 enum: [customer, agent, manager, admin]
+ *                 enum: [customer, agent, manager, branch_receptionist, executive_admin, admin]
+ *                 description: "The role profile to create. Must match a role in your User.roles array."
  *                 example: customer
  *               full_name:
  *                 type: string
@@ -66,7 +67,7 @@ const managerAdmin = requireRoles("manager", "admin");
  *                 type: array
  *                 items:
  *                   type: string
- *                 description: Only applicable to manager role
+ *                 description: Applicable to manager and branch_receptionist roles
  *               approval_limit_usd:
  *                 type: number
  *                 description: Only applicable to manager role
@@ -96,7 +97,7 @@ router.post("/self", authMiddleware, profileController.createSelfProfile);
  * /api/v1/profiles/customer/by-staff:
  *   post:
  *     summary: Create a customer profile on behalf of another user
- *     description: Only agent, manager or admin can create customer profiles for other users.
+ *     description: Only agent, manager, branch_receptionist, or admin can create customer profiles for other users.
  *     tags: [Profiles]
  *     security:
  *       - bearerAuth: []
@@ -154,7 +155,7 @@ router.post(
  * /api/v1/profiles/agent/by-staff:
  *   post:
  *     summary: Create an agent profile on behalf of another user
- *     description: Only manager or admin can create agent profiles for other users.
+ *     description: Only manager, branch_receptionist, or admin can create agent profiles for other users.
  *     tags: [Profiles]
  *     security:
  *       - bearerAuth: []
@@ -269,6 +270,64 @@ router.post(
 
 /**
  * @swagger
+ * /api/v1/profiles/branch-receptionist/by-staff:
+ *   post:
+ *     summary: Create a branch receptionist profile on behalf of another user
+ *     description: Only admin or manager can create branch_receptionist profiles for other users. Assigns the user to one or more branches.
+ *     tags: [Profiles]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - target_user_id
+ *             properties:
+ *               target_user_id:
+ *                 type: string
+ *                 description: User ID of the branch receptionist
+ *               full_name:
+ *                 type: string
+ *               dob:
+ *                 type: string
+ *                 format: date-time
+ *               national_id:
+ *                 type: string
+ *               driver_license:
+ *                 $ref: '#/components/schemas/DriverLicense'
+ *               address:
+ *                 $ref: '#/components/schemas/Address'
+ *               preferences:
+ *                 $ref: '#/components/schemas/Preferences'
+ *               gdpr:
+ *                 $ref: '#/components/schemas/Gdpr'
+ *               branch_ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Branch IDs the receptionist is assigned to
+ *     responses:
+ *       201:
+ *         description: Branch receptionist profile created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.post(
+  "/branch-receptionist/by-staff",
+  authMiddleware,
+  requireRoles("admin", "manager"),
+  profileController.createBranchReceptionistByStaff
+);
+
+/**
+ * @swagger
  * /api/v1/profiles/me/{role}:
  *   get:
  *     summary: Get current user's profile for a specific role
@@ -281,7 +340,7 @@ router.post(
  *         required: true
  *         schema:
  *           type: string
- *           enum: [customer, agent, manager, admin]
+ *           enum: [customer, agent, manager, branch_receptionist, executive_admin, admin]
  *     responses:
  *       200:
  *         description: Profile found
@@ -305,7 +364,7 @@ router.get("/me/:role", authMiddleware, profileController.getMyProfileByRole);
  * @swagger
  * /api/v1/profiles:
  *   get:
- *     summary: List profiles (manager/admin only)
+ *     summary: List profiles (manager/branch_receptionist/admin only)
  *     tags: [Profiles]
  *     security:
  *       - bearerAuth: []
@@ -314,7 +373,7 @@ router.get("/me/:role", authMiddleware, profileController.getMyProfileByRole);
  *         name: role
  *         schema:
  *           type: string
- *           enum: [customer, agent, manager, admin]
+ *           enum: [customer, agent, manager, branch_receptionist, executive_admin, admin]
  *       - in: query
  *         name: userId
  *         schema:
@@ -361,7 +420,7 @@ router.get("/:id", authMiddleware, profileController.getProfileById);
  * /api/v1/profiles/{id}:
  *   patch:
  *     summary: Update a profile
- *     description: Owner can update their own profile. Manager/Admin can update any profile.
+ *     description: Owner can update their own profile. Manager/Branch Receptionist/Admin can update any profile.
  *     tags: [Profiles]
  *     security:
  *       - bearerAuth: []

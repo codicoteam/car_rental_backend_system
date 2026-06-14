@@ -11,7 +11,8 @@ const {
 } = require("../middlewares/auth_middleware");
 
 const driverOnly = requireRoles("driver");
-const managerOrAdmin = requireRoles("manager", "admin");
+const managerOrAdmin = requireRoles("manager", "branch_receptionist", "admin");
+const managerOrAdminOrExec = requireRoles("manager", "branch_receptionist", "executive_admin", "admin");
 
 /**
  * @swagger
@@ -357,7 +358,7 @@ router.patch(
  * @swagger
  * /api/v1/driver-bookings/admin:
  *   get:
- *     summary: Admin/Manager - list all driver bookings
+ *     summary: Admin/Manager/Branch Receptionist/Executive Admin - list all driver bookings
  *     tags: [DriverBookings]
  *     security:
  *       - bearerAuth: []
@@ -395,7 +396,7 @@ router.patch(
 router.get(
   "/admin",
   authMiddleware,
-  managerOrAdmin,
+  managerOrAdminOrExec,
   driverBookingController.adminListBookings
 );
 
@@ -403,7 +404,7 @@ router.get(
  * @swagger
  * /api/v1/driver-bookings/admin/{id}:
  *   get:
- *     summary: Admin/Manager - get driver booking by ID
+ *     summary: Admin/Manager/Branch Receptionist/Executive Admin - get driver booking by ID
  *     tags: [DriverBookings]
  *     security:
  *       - bearerAuth: []
@@ -426,7 +427,7 @@ router.get(
 router.get(
   "/admin/:id",
   authMiddleware,
-  managerOrAdmin,
+  managerOrAdminOrExec,
   driverBookingController.adminGetBookingById
 );
 

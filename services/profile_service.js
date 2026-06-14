@@ -189,6 +189,40 @@ async function getProfilesByUserId(userId) {
 }
 
 
+async function createBranchReceptionistProfileByStaff(
+  actorUserId,
+  targetUserId,
+  data = {}
+) {
+  const actor = await User.findById(actorUserId).select("roles");
+  if (!actor) throw new Error("Actor not found");
+
+  const allowed = actor.roles.includes("admin") || actor.roles.includes("manager");
+  if (!allowed)
+    throw new Error("Forbidden: only admin or manager can create branch_receptionist profiles");
+
+  const target = await User.findById(targetUserId).select("full_name roles");
+  if (!target) throw new Error("Target user not found");
+
+  if (!target.roles.includes("branch_receptionist")) {
+    target.roles.push("branch_receptionist");
+    await target.save();
+  }
+
+  const profile = await Profile.createForSelf(target._id, "branch_receptionist", {
+    full_name: data.full_name ?? target.full_name,
+    dob: data.dob,
+    national_id: data.national_id,
+    driver_license: data.driver_license,
+    address: data.address,
+    preferences: data.preferences,
+    gdpr: data.gdpr,
+    branch_ids: data.branch_ids || [],
+  });
+
+  return profile;
+}
+
 module.exports = {
   listProfiles,
   getProfileById,
@@ -197,6 +231,7 @@ module.exports = {
   createCustomerProfileByStaff,
   createAgentProfileByStaff,
   createManagerProfileByStaff,
+  createBranchReceptionistProfileByStaff,
   updateProfile,
   deleteProfile,
   getProfilesByUserId

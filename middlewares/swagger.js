@@ -442,9 +442,10 @@ const options = {
 
             roles: {
               type: "array",
+              description: "One or more roles assigned to the user. branch_receptionist has the same operational access as manager. executive_admin is read-only — can view dashboards and reports but cannot write any data.",
               items: {
                 type: "string",
-                enum: ["customer", "agent", "manager", "admin", "driver"],
+                enum: ["customer", "agent", "manager", "branch_receptionist", "executive_admin", "admin", "driver"],
               },
               example: ["customer"],
             },
@@ -1105,7 +1106,7 @@ const options = {
             },
             role: {
               type: "string",
-              enum: ["customer", "agent", "manager", "admin"],
+              enum: ["customer", "agent", "manager", "branch_receptionist", "executive_admin", "admin"],
               example: "customer",
             },
             full_name: {
@@ -1300,7 +1301,7 @@ const options = {
                 verified: {
                   type: "boolean",
                   description:
-                    "Set by manager/admin when customer profile has been manually reviewed. Does NOT block usage if false.",
+                    "Set by manager/branch_receptionist/admin when customer profile has been manually reviewed. Does NOT block usage if false.",
                   example: false,
                 },
                 loyalty_points: {
@@ -1326,7 +1327,7 @@ const options = {
                 verified: {
                   type: "boolean",
                   description:
-                    "Set by manager/admin when agent profile has been verified. Does NOT block usage if false.",
+                    "Set by manager/branch_receptionist/admin when agent profile has been verified. Does NOT block usage if false.",
                   example: false,
                 },
                 branch_id: {
@@ -1370,6 +1371,48 @@ const options = {
                   description:
                     "Maximum USD amount the manager can approve for overrides/discounts.",
                   example: 500,
+                },
+              },
+            },
+          ],
+        },
+
+        ExecutiveAdminProfile: {
+          allOf: [
+            { $ref: "#/components/schemas/Profile" },
+            {
+              type: "object",
+              description: "Read-only executive profile. Can view global dashboards, reports, and all business data but cannot create, update, or delete any records.",
+              properties: {
+                role: {
+                  type: "string",
+                  enum: ["executive_admin"],
+                  example: "executive_admin",
+                },
+              },
+            },
+          ],
+        },
+
+        BranchReceptionistProfile: {
+          allOf: [
+            { $ref: "#/components/schemas/Profile" },
+            {
+              type: "object",
+              description: "Profile for branch reception staff. Has the same operational permissions as a branch manager.",
+              properties: {
+                role: {
+                  type: "string",
+                  enum: ["branch_receptionist"],
+                  example: "branch_receptionist",
+                },
+                branch_ids: {
+                  type: "array",
+                  description: "Branches this receptionist is assigned to.",
+                  items: {
+                    type: "string",
+                  },
+                  example: ["6750f1e0c1a2b34de0abcd01"],
                 },
               },
             },
@@ -1822,7 +1865,7 @@ const options = {
             customer_id: {
               type: "string",
               description:
-                "Optional. Only used by agent/manager/admin to create on behalf of a customer.",
+                "Optional. Only used by agent/manager/branch_receptionist/admin to create on behalf of a customer.",
               example: "665a8c7be4f1c23b04d12345",
             },
             driver_profile_id: {
@@ -2072,7 +2115,7 @@ const options = {
             customer_id: {
               type: "string",
               description:
-                "Optional. Only used by agent/manager/admin to create on behalf of a customer.",
+                "Optional. Only used by agent/manager/branch_receptionist/admin to create on behalf of a customer.",
               example: "665a8c7be4f1c23b04d12345",
             },
             driver_profile_id: {
@@ -2322,7 +2365,7 @@ const options = {
             },
             role_at_time: {
               type: "string",
-              enum: ["customer", "agent", "manager", "admin", "driver"],
+              enum: ["customer", "agent", "manager", "branch_receptionist", "executive_admin", "admin", "driver"],
               example: "agent",
             },
             joined_at: {
@@ -2919,7 +2962,7 @@ const options = {
                   description: "Required (non-empty) when scope === 'roles'",
                   items: {
                     type: "string",
-                    enum: ["customer", "agent", "manager", "admin", "driver"],
+                    enum: ["customer", "agent", "manager", "branch_receptionist", "executive_admin", "admin", "driver"],
                   },
                   example: ["customer"],
                 },
@@ -3095,7 +3138,7 @@ const options = {
       {
         name: "Profiles",
         description:
-          "Operations related to user profiles (customer/agent/manager/admin)",
+          "Operations related to user profiles (customer/agent/manager/branch_receptionist/admin)",
       },
       {
         name: "VehicleModels",

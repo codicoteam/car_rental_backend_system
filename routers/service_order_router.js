@@ -20,7 +20,7 @@ const {
  * @swagger
  * /api/v1/service-orders:
  *   post:
- *     summary: Create a new service order (Admin/Manager only)
+ *     summary: Create a new service order (Admin/Manager/Branch Receptionist only)
  *     tags: [ServiceOrders]
  *     security:
  *       - bearerAuth: []
@@ -38,7 +38,7 @@ const {
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (role restriction)
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       500:
  *         description: Internal server error
  *
@@ -85,7 +85,7 @@ const {
 router.post(
   "/",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   serviceOrderController.createServiceOrder
 );
 
@@ -121,7 +121,7 @@ router.get(
  *         description: Internal server error
  *
  *   put:
- *     summary: Update a service order (Admin/Manager only)
+ *     summary: Update a service order (Admin/Manager/Branch Receptionist only)
  *     tags: [ServiceOrders]
  *     security:
  *       - bearerAuth: []
@@ -141,14 +141,14 @@ router.get(
  *       400:
  *         description: Validation error
  *       403:
- *         description: Forbidden (role restriction)
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       404:
  *         description: Not found
  *       500:
  *         description: Internal server error
  *
  *   delete:
- *     summary: Delete a service order (Admin/Manager only)
+ *     summary: Delete a service order (Admin/Manager/Branch Receptionist only)
  *     tags: [ServiceOrders]
  *     security:
  *       - bearerAuth: []
@@ -158,7 +158,7 @@ router.get(
  *       400:
  *         description: Invalid ID
  *       403:
- *         description: Forbidden (role restriction)
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       404:
  *         description: Not found
  */
@@ -174,7 +174,7 @@ router.get(
 router.put(
   "/service-orders/:id",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   serviceOrderController.updateServiceOrder
 );
 
@@ -182,7 +182,7 @@ router.put(
 router.delete(
   "/service-orders/:id",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   serviceOrderController.deleteServiceOrder
 );
 
@@ -217,7 +217,7 @@ router.get(
  * @swagger
  * /api/v1/service-orders/{id}/status:
  *   patch:
- *     summary: Update only the status of a service order (Admin/Manager only)
+ *     summary: Update only the status of a service order (Admin/Manager/Branch Receptionist only)
  *     tags: [ServiceOrders]
  *     security:
  *       - bearerAuth: []
@@ -242,7 +242,7 @@ router.get(
  *       400:
  *         description: Invalid status
  *       403:
- *         description: Forbidden (role restriction)
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       404:
  *         description: Not found
  */
@@ -250,7 +250,7 @@ router.get(
 router.patch(
   "/service-orders/:id/status",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   serviceOrderController.updateServiceOrderStatus
 );
 

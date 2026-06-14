@@ -1,6 +1,7 @@
 // controllers/user_controller.js
 const jwt = require("jsonwebtoken");
 const userService = require("../services/user_service");
+const auditService = require("../services/audit_service");
 
 function generateToken(user) {
   const payload = {
@@ -40,7 +41,7 @@ async function registerUser(req, res) {
 
     // Validate roles if provided
     if (roles) {
-      const validRoles = ["customer", "agent", "manager", "admin", "driver"];
+      const validRoles = ["customer", "agent", "manager", "branch_receptionist", "executive_admin", "admin", "driver"];
       const invalidRoles = roles.filter(role => !validRoles.includes(role));
       
       if (invalidRoles.length > 0) {
@@ -171,6 +172,17 @@ async function loginUser(req, res) {
     }
 
     const token = generateToken(user);
+
+    auditService.log({
+      user_id: user._id,
+      actor_id: user._id,
+      action: "login",
+      entity_type: "user",
+      entity_id: user._id,
+      description: "User logged in",
+      ip_address: req.ip,
+      user_agent: req.headers["user-agent"],
+    });
 
     user.password_hash = undefined;
 
@@ -525,7 +537,7 @@ async function adminCreateUser(req, res) {
 
     // Validate roles if provided (same as your register validation)
     if (roles) {
-      const validRoles = ["customer", "agent", "manager", "admin", "driver"];
+      const validRoles = ["customer", "agent", "manager", "branch_receptionist", "executive_admin", "admin", "driver"];
       if (!Array.isArray(roles) || roles.length === 0) {
         return res.status(400).json({
           success: false,
@@ -547,8 +559,19 @@ async function adminCreateUser(req, res) {
       full_name,
       email,
       phone,
-      password, // optional
-      roles, // optional
+      password,
+      roles,
+    });
+
+    auditService.log({
+      user_id: user._id,
+      actor_id: req.user?._id || null,
+      action: "user_created",
+      entity_type: "user",
+      entity_id: user._id,
+      description: `User account created by admin with roles: ${(user.roles || []).join(", ")}`,
+      ip_address: req.ip,
+      user_agent: req.headers["user-agent"],
     });
 
     // no token
