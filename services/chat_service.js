@@ -7,7 +7,7 @@ const User = require("../models/user_model");
 // Role-based chat permission
 // ---------------------------------------------------------------------------
 
-const STAFF_ROLES = ["agent", "manager", "admin"];
+const STAFF_ROLES = ["agent", "manager", "admin", "executive_admin", "branch_receptionist"];
 const CUSTOMER_DRIVER_ROLES = ["customer", "driver"];
 
 /**
