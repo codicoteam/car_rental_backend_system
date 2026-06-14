@@ -125,6 +125,7 @@ async function getAdminDashboard(query = {}) {
     totalDriversBookingsCount,
     totalCustomers,
     completedReservations,
+    branchesForMap,
   ] = await Promise.all([
     Branch.countDocuments({ active: true }),
     Vehicle.countDocuments({}),
@@ -137,6 +138,7 @@ async function getAdminDashboard(query = {}) {
     DriverBooking.countDocuments({ created_at: { $gte: from, $lte: to } }).catch(() => 0),
     User.countDocuments({ roles: { $in: ["customer"] }, status: "active" }).catch(() => 0),
     Reservation.countDocuments({ created_at: { $gte: from, $lte: to }, status: "returned" }).catch(() => 0),
+    Branch.find({ active: true }).select("name code address geo").lean().catch(() => []),
   ]);
 
   // Pie: reservations by status (NO $function)
@@ -277,6 +279,17 @@ async function getAdminDashboard(query = {}) {
       avg_rental_duration_days: avgRentalDays,
       mom_revenue_growth: momGrowth,
     },
+    branches: branchesForMap.map((b) => ({
+      _id: b._id,
+      name: b.name,
+      code: b.code,
+      address: {
+        city: b.address?.city ?? null,
+        country: b.address?.country ?? null,
+      },
+      lat: b.geo?.coordinates?.[1] ?? null,
+      lng: b.geo?.coordinates?.[0] ?? null,
+    })),
     charts: {
       pie: {
         reservations_by_status: normalizePie4(reservationsByStatusAgg),
