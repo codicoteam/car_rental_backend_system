@@ -8,7 +8,7 @@ const {
   requireRoles,
 } = require("../middlewares/auth_middleware");
 
-const managerOrAdmin = requireRoles("manager", "admin");
+const managerOrAdmin = requireRoles("manager", "branch_receptionist", "admin");
 
 /**
  * @swagger
@@ -22,7 +22,7 @@ const managerOrAdmin = requireRoles("manager", "admin");
  * /api/v1/vehicles:
  *   post:
  *     summary: Create a vehicle unit
- *     description: Only manager or admin can create vehicles.
+ *     description: Only manager, branch_receptionist, or admin can create vehicles.
  *     tags: [Vehicles]
  *     security:
  *       - bearerAuth: []
@@ -182,7 +182,7 @@ router.get("/:id", vehicleUnitController.getVehicleById);
  * /api/v1/vehicles/{id}:
  *   patch:
  *     summary: Update a vehicle
- *     description: Only manager or admin can update vehicle units.
+ *     description: Only manager, branch_receptionist, or admin can update vehicle units.
  *     tags: [Vehicles]
  *     security:
  *       - bearerAuth: []
@@ -223,7 +223,7 @@ router.patch(
  * /api/v1/vehicles/{id}:
  *   delete:
  *     summary: Delete a vehicle
- *     description: Only manager or admin can delete vehicles.
+ *     description: Only manager, branch_receptionist, or admin can delete vehicles.
  *     tags: [Vehicles]
  *     security:
  *       - bearerAuth: []
@@ -256,7 +256,7 @@ router.delete(
  * /api/v1/vehicles/{id}/availability:
  *   patch:
  *     summary: Update vehicle availability state
- *     description: Only manager or admin can change availability_state.
+ *     description: Only manager, branch_receptionist, or admin can change availability_state.
  *     tags: [Vehicles]
  *     security:
  *       - bearerAuth: []
@@ -304,7 +304,7 @@ router.patch(
  * /api/v1/vehicles/{id}/service:
  *   patch:
  *     summary: Record a service event for a vehicle
- *     description: Only manager or admin can record services.
+ *     description: Only manager, branch_receptionist, or admin can record services.
  *     tags: [Vehicles]
  *     security:
  *       - bearerAuth: []

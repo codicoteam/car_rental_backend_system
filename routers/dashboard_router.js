@@ -110,7 +110,11 @@ const {
  * @openapi
  * /api/v1/dashboard/admin:
  *   get:
- *     summary: Admin dashboard metrics (global)
+ *     summary: Admin / Executive Admin dashboard metrics (global)
+ *     description: >
+ *       Returns global KPIs, revenue charts, fleet stats, and reservation breakdowns
+ *       across all branches. Accessible by **admin** and **executive_admin** roles.
+ *       executive_admin has read-only access — no write operations are permitted.
  *     tags:
  *       - Dashboard
  *     security:
@@ -121,31 +125,31 @@ const {
  *         schema:
  *           type: string
  *           format: date
- *         description: "Start date (ISO). Default: last 30 days."
+ *         description: "Start date in ISO format (e.g. 2025-12-01). Defaults to last 30 days."
  *         example: "2025-12-01"
  *       - in: query
  *         name: to
  *         schema:
  *           type: string
  *           format: date
- *         description: "End date (ISO). Default: today."
+ *         description: "End date in ISO format (e.g. 2025-12-31). Defaults to today."
  *         example: "2025-12-30"
  *     responses:
  *       200:
- *         description: Dashboard data for admin UI
+ *         description: Global dashboard data for admin / executive overview UI
  *         content:
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/DashboardResponse"
  *       401:
- *         description: Unauthorized (missing/invalid token)
+ *         description: Unauthorized – missing or invalid Bearer token
  *       403:
- *         description: Forbidden (requires admin role)
+ *         description: Forbidden – requires admin or executive_admin role
  */
 router.get(
   "/admin",
   authMiddleware,
-  adminMiddleware, // ✅ your existing middleware
+  requireRoles("admin", "executive_admin"),
   dashboardController.getAdminDashboard
 );
 
@@ -153,7 +157,10 @@ router.get(
  * @openapi
  * /api/v1/dashboard/manager:
  *   get:
- *     summary: Branch manager dashboard metrics (scoped to manager branch_ids)
+ *     summary: Branch manager / receptionist dashboard metrics (scoped to branch)
+ *     description: >
+ *       Returns KPIs, charts, and metrics scoped to the branches this manager or receptionist is assigned to.
+ *       Accessible by users with role **manager** or **branch_receptionist**.
  *     tags:
  *       - Dashboard
  *     security:
@@ -164,29 +171,29 @@ router.get(
  *         schema:
  *           type: string
  *           format: date
- *         description: "Start date (ISO). Default: last 30 days."
+ *         description: "Start date in ISO format (e.g. 2025-01-01). Defaults to last 30 days."
  *       - in: query
  *         name: to
  *         schema:
  *           type: string
  *           format: date
- *         description: "End date (ISO). Default: today."
+ *         description: "End date in ISO format (e.g. 2025-01-31). Defaults to today."
  *     responses:
  *       200:
- *         description: Dashboard data for manager UI
+ *         description: Dashboard data for branch manager / receptionist UI
  *         content:
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/DashboardResponse"
  *       401:
- *         description: Unauthorized (missing/invalid token)
+ *         description: Unauthorized – missing or invalid Bearer token
  *       403:
- *         description: Forbidden (requires manager role and branch scope)
+ *         description: Forbidden – requires manager or branch_receptionist role
  */
 router.get(
   "/manager",
   authMiddleware,
-  requireRoles("manager"),
+  requireRoles("manager", "branch_receptionist"),
   dashboardController.getManagerDashboard
 );
 

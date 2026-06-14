@@ -50,8 +50,13 @@ const {
  *                 type: array
  *                 items:
  *                   type: string
- *                   enum: [customer, agent, manager, admin, driver]
- *                 example: ["agent"]
+ *                   enum: [customer, agent, manager, branch_receptionist, executive_admin, admin, driver]
+ *                 description: >
+ *                   One or more roles to assign. Defaults to `customer` if omitted.
+ *                   Use `branch_receptionist` for front-desk staff who need the same
+ *                   operational access as a branch manager.
+ *                   Use `executive_admin` for read-only executive oversight (dashboards and reports only).
+ *                 example: ["branch_receptionist"]
  */
 router.post("/register", userController.registerUser);
 
@@ -583,7 +588,11 @@ router.patch(
  * @swagger
  * /api/v1/users/admin-create:
  *   post:
- *     summary: Admin/Manager — Create a user without OTP (email is verified; no token returned)
+ *     summary: Admin/Manager/Branch Receptionist — Create a user without OTP (email is verified; no token returned)
+ *     description: >
+ *       Creates a new user account with email pre-verified and no OTP flow.
+ *       No JWT token is returned — the user must log in separately.
+ *       Accessible by admin, manager, and branch_receptionist roles.
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -611,8 +620,13 @@ router.patch(
  *                 type: array
  *                 items:
  *                   type: string
- *                   enum: [customer, agent, manager, admin, driver]
- *                 example: ["agent"]
+ *                   enum: [customer, agent, manager, branch_receptionist, executive_admin, admin, driver]
+ *                 description: >
+ *                   One or more roles to assign. Defaults to `customer` if omitted.
+ *                   Use `branch_receptionist` for front-desk staff who need the same
+ *                   operational access as a branch manager.
+ *                   Use `executive_admin` for read-only executive oversight (dashboards and reports only).
+ *                 example: ["branch_receptionist"]
  *     responses:
  *       201:
  *         description: User created successfully (no token)
@@ -628,7 +642,7 @@ router.patch(
 router.post(
   "/admin-create",
   authMiddleware,
-  requireRoles("admin", "manager"), // ✅ works with your middleware
+  requireRoles("admin", "manager", "branch_receptionist"),
   userController.adminCreateUser
 );
 

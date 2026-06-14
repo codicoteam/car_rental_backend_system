@@ -72,7 +72,7 @@ const {
  * @swagger
  * /api/v1/service-schedules:
  *   post:
- *     summary: Create a service schedule (Admin/Manager only)
+ *     summary: Create a service schedule (Admin/Manager/Branch Receptionist only)
  *     tags: [ServiceSchedules]
  *     security:
  *       - bearerAuth: []
@@ -90,7 +90,7 @@ const {
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (role restriction)
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       500:
  *         description: Internal server error
  *
@@ -117,11 +117,11 @@ const {
  *         description: Internal server error
  */
 
-// Create (admin + manager)
+// Create (admin + manager + branch_receptionist)
 router.post(
   "/",
   authMiddleware,
-  requireRoles("admin", "manager", "customer", "agent", "driver"),
+  requireRoles("admin", "manager", "branch_receptionist", "customer", "agent", "driver"),
   serviceScheduleController.createServiceSchedule
 );
 
@@ -159,7 +159,7 @@ router.get(
  *         description: Internal server error
  *
  *   put:
- *     summary: Update a service schedule (Admin/Manager only)
+ *     summary: Update a service schedule (Admin/Manager/Branch Receptionist only)
  *     tags: [ServiceSchedules]
  *     security:
  *       - bearerAuth: []
@@ -183,14 +183,14 @@ router.get(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (role restriction)
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       404:
  *         description: Not found
  *       500:
  *         description: Internal server error
  *
  *   delete:
- *     summary: Delete a service schedule (Admin/Manager only)
+ *     summary: Delete a service schedule (Admin/Manager/Branch Receptionist only)
  *     tags: [ServiceSchedules]
  *     security:
  *       - bearerAuth: []
@@ -208,7 +208,7 @@ router.get(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (role restriction)
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       404:
  *         description: Not found
  *       500:
@@ -222,18 +222,19 @@ router.get(
   serviceScheduleController.getServiceScheduleById
 );
 
-// Update (admin + manager)
+// Update (admin + manager + branch_receptionist)
 router.put(
   "/:id",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   serviceScheduleController.updateServiceSchedule
 );
 
-// Delete (admin + manager)
+// Delete (admin + manager + branch_receptionist)
 router.delete(
   "/:id",
   authMiddleware,
+  requireRoles("admin", "manager", "branch_receptionist"),
   serviceScheduleController.deleteServiceSchedule
 );
 

@@ -97,7 +97,7 @@ const {
  * @swagger
  * /api/v1/vehicle-incidents:
  *   post:
- *     summary: Create a vehicle incident (Admin/Manager only)
+ *     summary: Create a vehicle incident (Admin/Manager/Branch Receptionist only)
  *     tags: [VehicleIncidents]
  *     security:
  *       - bearerAuth: []
@@ -115,7 +115,7 @@ const {
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden (role restriction)
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role – requires admin, manager, or branch_receptionist role
  *       500:
  *         description: Internal server error
  *
@@ -160,7 +160,7 @@ const {
 router.post(
   "/",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   vehicleIncidentController.createVehicleIncident
 );
 
@@ -250,7 +250,7 @@ router.get(
  *         description: Internal server error
  *
  *   put:
- *     summary: Update a vehicle incident (Admin/Manager only)
+ *     summary: Update a vehicle incident (Admin/Manager/Branch Receptionist only)
  *     tags: [VehicleIncidents]
  *     security:
  *       - bearerAuth: []
@@ -274,14 +274,14 @@ router.get(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       404:
  *         description: Not found
  *       500:
  *         description: Internal server error
  *
  *   delete:
- *     summary: Delete a vehicle incident (Admin/Manager only)
+ *     summary: Delete a vehicle incident (Admin/Manager/Branch Receptionist only)
  *     tags: [VehicleIncidents]
  *     security:
  *       - bearerAuth: []
@@ -299,7 +299,7 @@ router.get(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       404:
  *         description: Not found
  *       500:
@@ -317,7 +317,7 @@ router.get(
 router.put(
   "/:id",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   vehicleIncidentController.updateVehicleIncident
 );
 
@@ -325,7 +325,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   vehicleIncidentController.deleteVehicleIncident
 );
 
@@ -333,7 +333,7 @@ router.delete(
  * @swagger
  * /api/v1/vehicle-incidents/{id}/status:
  *   patch:
- *     summary: Update the status of a vehicle incident (Admin/Manager only)
+ *     summary: Update the status of a vehicle incident (Admin/Manager/Branch Receptionist only)
  *     tags: [VehicleIncidents]
  *     security:
  *       - bearerAuth: []
@@ -362,7 +362,7 @@ router.delete(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden
+ *         description: Forbidden – requires admin, manager, or branch_receptionist role
  *       404:
  *         description: Not found
  *       500:
@@ -373,7 +373,7 @@ router.delete(
 router.patch(
   "/:id/status",
   authMiddleware,
-  requireRoles("admin", "manager"),
+  requireRoles("admin", "manager", "branch_receptionist"),
   vehicleIncidentController.updateVehicleIncidentStatus
 );
 

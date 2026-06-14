@@ -91,10 +91,12 @@ const requireRoles = (...allowedRoles) => {
   };
 };
 
-// Role middlewares (based on your enum: customer, agent, manager, admin, driver)
+// Role middlewares (based on your enum: customer, agent, manager, branch_receptionist, executive_admin, admin, driver)
 const customerMiddleware = requireRoles("customer");
 const agentMiddleware = requireRoles("agent");
 const managerMiddleware = requireRoles("manager");
+const branchReceptionistMiddleware = requireRoles("branch_receptionist");
+const executiveAdminMiddleware = requireRoles("executive_admin");
 const adminMiddleware = requireRoles("admin");
 const driverMiddleware = requireRoles("driver");
 
@@ -136,6 +138,8 @@ module.exports = {
   customerMiddleware,
   agentMiddleware,
   managerMiddleware,
+  branchReceptionistMiddleware,
+  executiveAdminMiddleware,
   adminMiddleware,
   driverMiddleware,
   customerOnlyMiddleware,

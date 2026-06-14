@@ -8,8 +8,8 @@ const {
   requireRoles,
 } = require("../middlewares/auth_middleware");
 
-// Admin + Manager guard
-const adminOrManagerMiddleware = requireRoles("admin", "manager");
+// Admin + Manager + Branch Receptionist guard
+const adminOrManagerMiddleware = requireRoles("admin", "manager", "branch_receptionist");
 
 /**
  * @swagger
@@ -28,7 +28,7 @@ const adminOrManagerMiddleware = requireRoles("admin", "manager");
  * /api/v1/vehicle-trackers:
  *   post:
  *     summary: Create a new vehicle tracker
- *     description: Admin/Manager can register a new tracking device in the system.
+ *     description: Admin/Manager/Branch Receptionist can register a new tracking device in the system.
  *     tags: [VehicleTrackers]
  *     security:
  *       - bearerAuth: []
@@ -83,7 +83,7 @@ router.post(
  * /api/v1/vehicle-trackers:
  *   get:
  *     summary: List vehicle trackers
- *     description: Admin/Manager can list all trackers with optional filters.
+ *     description: Admin/Manager/Branch Receptionist can list all trackers with optional filters.
  *     tags: [VehicleTrackers]
  *     security:
  *       - bearerAuth: []
@@ -176,7 +176,7 @@ router.get(
  * /api/v1/vehicle-trackers/{id}:
  *   patch:
  *     summary: Update a tracker
- *     description: Admin/Manager can update tracker label, notes, status, or settings.
+ *     description: Admin/Manager/Branch Receptionist can update tracker label, notes, status, or settings.
  *     tags: [VehicleTrackers]
  *     security:
  *       - bearerAuth: []
@@ -245,7 +245,7 @@ router.patch(
  * /api/v1/vehicle-trackers/{id}:
  *   delete:
  *     summary: Delete a tracker
- *     description: Admin/Manager can delete a tracker record.
+ *     description: Admin/Manager/Branch Receptionist can delete a tracker record.
  *     tags: [VehicleTrackers]
  *     security:
  *       - bearerAuth: []

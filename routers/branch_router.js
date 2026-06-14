@@ -8,7 +8,7 @@ const {
   requireRoles,
 } = require("../middlewares/auth_middleware");
 
-const managerOrAdmin = requireRoles("manager", "admin");
+const managerOrAdmin = requireRoles("manager", "branch_receptionist", "admin");
 const adminOnly = requireRoles("admin");
 
 /**
@@ -160,7 +160,7 @@ router.get(
  * /api/v1/branches:
  *   post:
  *     summary: Create a branch
- *     description: Only manager/admin can create branches.
+ *     description: Only manager, branch_receptionist, or admin can create branches.
  *     tags: [Branches]
  *     security:
  *       - bearerAuth: []
@@ -259,7 +259,7 @@ router.get("/:id", branchController.getBranchById);
  * /api/v1/branches/{id}:
  *   patch:
  *     summary: Update a branch
- *     description: Only manager/admin can update branches.
+ *     description: Only manager, branch_receptionist, or admin can update branches.
  *     tags: [Branches]
  *     security:
  *       - bearerAuth: []

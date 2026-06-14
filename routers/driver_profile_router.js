@@ -10,7 +10,8 @@ const {
   requireRoles,
 } = require("../middlewares/auth_middleware");
 
-const managerOrAdmin = requireRoles("manager", "admin");
+const managerOrAdmin = requireRoles("manager", "branch_receptionist", "admin");
+const managerOrAdminOrExec = requireRoles("manager", "branch_receptionist", "executive_admin", "admin");
 
 /**
  * @swagger
@@ -152,7 +153,9 @@ router.patch(
  * /api/v1/driver-profiles:
  *   get:
  *     summary: List driver profiles (management)
- *     description: Only manager/admin can list all driver profiles.
+ *     description: >
+ *       Lists all driver profiles with optional filters.
+ *       Accessible by manager, branch_receptionist, admin, and executive_admin (read-only).
  *     tags: [DriverProfiles]
  *     security:
  *       - bearerAuth: []
@@ -185,7 +188,7 @@ router.patch(
 router.get(
   "/",
   authMiddleware,
-  managerOrAdmin,
+  managerOrAdminOrExec,
   driverController.listDriverProfiles
 );
 
@@ -193,7 +196,7 @@ router.get(
  * @swagger
  * /api/v1/driver-profiles/{id}:
  *   get:
- *     summary: Get driver profile by ID (management)
+ *     summary: Get driver profile by ID (management / executive view)
  *     tags: [DriverProfiles]
  *     security:
  *       - bearerAuth: []
@@ -217,7 +220,7 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
-  managerOrAdmin,
+  managerOrAdminOrExec,
   driverController.getDriverProfileById
 );
 
@@ -303,7 +306,7 @@ router.patch(
  *   patch:
  *     summary: Admin update driver profile
  *     description: >
- *       Admin/manager can update fields like is_available, hourly_rate, etc.
+ *       Admin/manager/branch_receptionist can update fields like is_available, hourly_rate, etc.
  *       Be careful with status changes – recommend using approve/reject endpoints instead.
  *     tags: [DriverProfiles]
  *     security:
