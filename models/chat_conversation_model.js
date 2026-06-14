@@ -17,7 +17,7 @@ const ParticipantSchema = new Schema(
     },
     role_at_time: {
       type: String,
-      enum: ["customer", "agent", "manager", "admin", "driver"],
+      enum: ["customer", "agent", "manager", "admin", "driver", "executive_admin", "branch_receptionist"],
       default: null,
     },
     joined_at: {
