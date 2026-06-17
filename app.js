@@ -76,7 +76,17 @@ app.use("/api/v1/expenses", expenseRouter);
 // Global error handler (REST)
 app.use((err, req, res, next) => {
   console.error("Global error handler:", err.stack || err);
-  res.status(500).json({ message: "Something went wrong!" });
+  const status = err.statusCode || err.status || 500;
+  // Mongoose ValidationError → 400
+  if (err.name === "ValidationError") {
+    const messages = Object.values(err.errors || {}).map((e) => e.message);
+    return res.status(400).json({ success: false, message: messages.join("; ") || "Validation failed" });
+  }
+  // CastError (invalid ObjectId) → 400
+  if (err.name === "CastError") {
+    return res.status(400).json({ success: false, message: `Invalid value for field: ${err.path}` });
+  }
+  res.status(status).json({ success: false, message: err.message || "Something went wrong!" });
 });
 
 // Init Socket.IO (chat + tracking now)
