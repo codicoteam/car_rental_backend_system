@@ -37,7 +37,7 @@ const ExpenseSchema = new Schema(
     date: { type: Date, required: true },
     description: { type: String, trim: true, default: "" },
     branch_id: { type: ObjectId, ref: "Branch", required: true, index: true },
-    vehicle_id: { type: ObjectId, ref: "VehicleUnit", default: null },
+    vehicle_id: { type: ObjectId, ref: "Vehicle", default: null },
     receipt_images: { type: [String], default: [] },
     status: {
       type: String,

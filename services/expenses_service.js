@@ -1,5 +1,6 @@
 const Expense = require("../models/expense_model");
 const mongoose = require("mongoose");
+require("../models/vehicle_unit_model"); // ensure "Vehicle" schema is registered for populate
 
 const POPULATE_BRANCH = { path: "branch_id", select: "name code" };
 const POPULATE_VEHICLE = { path: "vehicle_id", select: "plate_number vin" };
