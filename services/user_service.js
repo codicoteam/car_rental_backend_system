@@ -422,13 +422,14 @@ async function updateOwnProfile(userId, data) {
  * Admin/manager: update user fields (including roles, status)
  */
 async function updateUserByAdmin(userId, data) {
-  const { full_name, phone, roles, status } = data;
+  const { full_name, phone, roles, status, branch_id } = data;
 
   const update = {};
   if (full_name !== undefined) update.full_name = full_name;
   if (phone !== undefined) update.phone = phone;
   if (Array.isArray(roles) && roles.length > 0) update.roles = roles;
   if (status !== undefined) update.status = status;
+  if (branch_id !== undefined) update.branch_id = branch_id || null;
 
   const user = await User.findByIdAndUpdate(
     userId,
@@ -461,7 +462,7 @@ async function deleteUser(userId) {
 
 
 
-async function adminCreateUser({ full_name, email, phone, password, roles }) {
+async function adminCreateUser({ full_name, email, phone, password, roles, branch_id }) {
   const normalizedEmail = email.toLowerCase();
 
   // fail fast if email exists
@@ -487,6 +488,7 @@ async function adminCreateUser({ full_name, email, phone, password, roles }) {
     email_verified: true,
     email_verification_otp: undefined,
     email_verification_expires_at: undefined,
+    branch_id: branch_id || null,
   });
 
   try {
