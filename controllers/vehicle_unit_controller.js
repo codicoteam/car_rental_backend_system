@@ -1,5 +1,21 @@
 // controllers/vehicle_unit_controller.js
 const vehicleUnitService = require("../services/vehicle_unit_service");
+const jwt = require("jsonwebtoken");
+
+const ACCOUNTING_ROLES = ["admin", "executive_admin", "manager", "branch_receptionist", "agent"];
+
+// Silently inspect optional Bearer token to decide whether to expose accounting fields.
+function canSeeAccounting(req) {
+  try {
+    const token = (req.headers.authorization || "").replace("Bearer ", "").trim();
+    if (!token) return false;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const roles = decoded.roles || (decoded.role ? [decoded.role] : []);
+    return Array.isArray(roles) && roles.some((r) => ACCOUNTING_ROLES.includes(r));
+  } catch {
+    return false;
+  }
+}
 
 /**
  * POST /api/vehicles
@@ -27,11 +43,13 @@ async function createVehicle(req, res) {
 
 /**
  * GET /api/vehicles
- * Public: list vehicles with filters (no pagination)
+ * Public: list vehicles. Accounting fields only returned to authenticated staff.
  */
 async function listVehicles(req, res) {
   try {
-    const result = await vehicleUnitService.listVehicles(req.query);
+    const result = await vehicleUnitService.listVehicles(req.query, {
+      includeAccounting: canSeeAccounting(req),
+    });
 
     return res.json({
       success: true,
@@ -50,11 +68,13 @@ async function listVehicles(req, res) {
 
 /**
  * GET /api/vehicles/:id
- * Public: get single vehicle
+ * Public: get single vehicle. Accounting fields only returned to authenticated staff.
  */
 async function getVehicleById(req, res) {
   try {
-    const vehicle = await vehicleUnitService.getVehicleById(req.params.id);
+    const vehicle = await vehicleUnitService.getVehicleById(req.params.id, {
+      includeAccounting: canSeeAccounting(req),
+    });
 
     return res.json({
       success: true,

@@ -85,31 +85,38 @@ async function createVehicle(payload) {
 
 /**
  * List vehicles with filters + pagination
- * This is guest-friendly (no auth required)
+ * Pass options.includeAccounting = true only for authenticated staff.
  */
-async function listVehicles(query = {}) {
+async function listVehicles(query = {}, options = {}) {
+  const { includeAccounting = false } = options;
   const filter = buildVehicleFilter(query);
 
-  const items = await Vehicle.find(filter)
+  let q = Vehicle.find(filter)
     .sort({ created_at: -1 })
     .populate("vehicle_model_id")
     .populate("branch_id");
 
-  return {
-    items,
-    total: items.length,
-  };
+  if (!includeAccounting) q = q.select("-accounting");
+
+  const items = await q;
+  return { items, total: items.length };
 }
 
 
 /**
- * Get a single vehicle by ID
+ * Get a single vehicle by ID.
+ * Pass options.includeAccounting = true only for authenticated staff.
  */
-async function getVehicleById(id) {
-  const vehicle = await Vehicle.findById(id)
+async function getVehicleById(id, options = {}) {
+  const { includeAccounting = false } = options;
+
+  let q = Vehicle.findById(id)
     .populate("vehicle_model_id")
     .populate("branch_id");
 
+  if (!includeAccounting) q = q.select("-accounting");
+
+  const vehicle = await q;
   if (!vehicle) {
     const error = new Error("Vehicle not found");
     error.statusCode = 404;

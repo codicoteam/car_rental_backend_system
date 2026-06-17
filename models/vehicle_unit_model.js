@@ -15,6 +15,16 @@ const MetadataSchema = new Schema(
   { _id: false }
 );
 
+// Internal accounting info — NEVER returned to customers
+const AccountingSchema = new Schema(
+  {
+    purchase_price: { type: Number, min: 0, default: null },
+    purchased_at:   { type: Date,   default: null },
+    currency:       { type: String, trim: true, uppercase: true, default: "USD" },
+  },
+  { _id: false }
+);
+
 const VehicleSchema = new Schema(
   {
     vin: { type: String, trim: true, unique: true, sparse: true },
@@ -61,9 +71,12 @@ const VehicleSchema = new Schema(
     },
 
     // NEW: last service info
-    last_service_at: { type: Date, default: null }, // date of last service
-    last_service_odometer_km: { type: Number, min: 0, default: null }, // odo at last service (optional)
+    last_service_at: { type: Date, default: null },
+    last_service_odometer_km: { type: Number, min: 0, default: null },
     metadata: { type: MetadataSchema, default: {} },
+
+    // Internal accounting — staff only, never exposed to customers
+    accounting: { type: AccountingSchema, default: {} },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
