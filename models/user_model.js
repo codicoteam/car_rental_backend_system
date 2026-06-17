@@ -55,6 +55,13 @@ const UserSchema = new mongoose.Schema(
 
     auth_providers: { type: [AuthProviderSchema], default: [] },
 
+    // Branch assignment for staff roles (receptionist, manager)
+    branch_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch",
+      default: null,
+    },
+
     // FCM tokens for push notifications (max 5 per user, dedup on insert)
     fcm_tokens: { type: [String], default: [] },
   },

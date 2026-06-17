@@ -2,6 +2,7 @@
 const jwt = require("jsonwebtoken");
 const userService = require("../services/user_service");
 const auditService = require("../services/audit_service");
+const Branch = require("../models/branch_models");
 
 function generateToken(user) {
   const payload = {
@@ -186,11 +187,24 @@ async function loginUser(req, res) {
 
     user.password_hash = undefined;
 
+    // Enrich user with branch_id for staff roles
+    let branchId = user.branch_id || null;
+    const userRoles = user.roles || [];
+    if (!branchId && userRoles.includes("manager")) {
+      try {
+        const branch = await Branch.findOne({ branchManager: user._id });
+        if (branch) branchId = branch._id;
+      } catch (_) {}
+    }
+
+    const userObj = user.toObject ? user.toObject() : { ...user };
+    userObj.branch_id = branchId;
+
     res.json({
       success: true,
       message: "Login successful",
       data: {
-        user,
+        user: userObj,
         token,
       },
     });
@@ -518,7 +532,7 @@ async function forgotPasswordReset(req, res) {
 
 async function adminCreateUser(req, res) {
   try {
-    const { full_name, email, phone, password, roles } = req.body;
+    const { full_name, email, phone, password, roles, branch_id } = req.body;
 
     if (!full_name || !email) {
       return res.status(400).json({
@@ -561,6 +575,7 @@ async function adminCreateUser(req, res) {
       phone,
       password,
       roles,
+      branch_id: branch_id || null,
     });
 
     auditService.log({
