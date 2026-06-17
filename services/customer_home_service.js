@@ -53,6 +53,7 @@ async function getCustomerHomeData(userId) {
       Vehicle.find({ availability_state: "available", status: "active" })
         .populate("vehicle_model_id", "make model year class transmission fuel_type seats images")
         .populate("branch_id", "name address")
+        .select("-accounting")
         .limit(8)
         .lean(),
 
@@ -121,6 +122,7 @@ async function getAvailableVehiclesForCustomer({ vehicleClass, branchId, limit =
     Vehicle.find(filter)
       .populate("vehicle_model_id", "make model year class transmission fuel_type seats images features")
       .populate("branch_id", "name address")
+      .select("-accounting")
       .limit(parseInt(limit))
       .lean(),
     fetchActivePlans(),
