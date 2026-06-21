@@ -2,7 +2,10 @@
 const Reservation = require("../models/reservations_model");
 const User = require("../models/user_model");
 const { Profile } = require("../models/profile_models");
-const { sendEmail } = require("../utils/user_email_utils"); // <-- use your email service
+const {
+  sendRentalConfirmationEmail,
+  sendNewBookingStaffAlertEmail,
+} = require("../utils/user_email_utils");
 
 /**
  * Build Mongo filter from query params
@@ -82,61 +85,100 @@ function formatDateTime(date) {
 }
 
 /**
- * Helper: send reservation emails to customer and creator
+ * Send booking confirmation to the customer.
  */
-async function sendReservationCreatedEmails(reservation) {
+async function sendCustomerConfirmationEmail(reservation) {
+  const customer = reservation.user_id;
+  if (!customer?.email) return;
+
+  await sendRentalConfirmationEmail({
+    to: customer.email,
+    fullName: customer.full_name || "Customer",
+    rental: {
+      reference: reservation.code,
+      date: formatDateTime(reservation.pickup?.at),
+      type: reservation.vehicle_model_id?.name || "Vehicle",
+    },
+  });
+}
+
+/**
+ * Find all active admins + branch managers assigned to a given branch.
+ * Admins (platform-wide) always receive the alert.
+ * Branch managers only receive it if they belong to the pickup branch.
+ */
+async function findStaffToNotify(pickupBranchId) {
+  const [admins, managers] = await Promise.all([
+    User.find({ roles: { $in: ["admin"] }, status: "active" }).select(
+      "full_name email"
+    ),
+    pickupBranchId
+      ? User.find({
+          roles: { $in: ["manager"] },
+          branch_id: pickupBranchId,
+          status: "active",
+        }).select("full_name email")
+      : [],
+  ]);
+
+  // Deduplicate by email in case an admin is also listed as a manager
+  const seen = new Set();
+  return [...admins, ...managers].filter((u) => {
+    if (!u.email || seen.has(u.email)) return false;
+    seen.add(u.email);
+    return true;
+  });
+}
+
+/**
+ * Fire-and-forget: alert all admins and branch managers about a new booking.
+ */
+async function notifyStaffOfNewBooking(reservation) {
   try {
-    const customer = reservation.user_id; // populated doc
-    const creator = reservation.created_by; // populated doc
+    const customer = reservation.user_id;
+    const pickupBranchId = reservation.pickup?.branch_id?._id ?? reservation.pickup?.branch_id;
 
-    const sameUser =
-      customer && creator && String(customer._id) === String(creator._id);
+    const staffList = await findStaffToNotify(pickupBranchId);
+    if (!staffList.length) return;
 
-    // Format dates using your existing formatDateTime function
-    const pickupAt = formatDateTime(reservation.pickup?.at);
-    const dropoffAt = formatDateTime(reservation.dropoff?.at);
+    const pickupBranchName =
+      reservation.pickup?.branch_id?.name || String(pickupBranchId || "—");
+    const dropoffBranchName =
+      reservation.dropoff?.branch_id?.name ||
+      String(reservation.dropoff?.branch_id || "—");
 
-    // Prepare reservation data object for templates
-    const reservationData = {
+    const grandTotal = reservation.pricing?.grand_total;
+    const totalStr = grandTotal != null ? Number(grandTotal).toFixed(2) : "—";
+
+    const reservationPayload = {
       code: reservation.code,
-      status: reservation.status,
-      pickup: {
-        branch_id: reservation.pickup?.branch_id,
-      },
-      dropoff: {
-        branch_id: reservation.dropoff?.branch_id,
-      },
-      vehicle_model_id: reservation.vehicle_model_id,
-      pricing: reservation.pricing,
-      pickupAt: pickupAt,
-      dropoffAt: dropoffAt,
+      vehicleModelName: reservation.vehicle_model_id?.name || "—",
+      pickupBranchName,
+      dropoffBranchName,
+      pickupAt: formatDateTime(reservation.pickup?.at),
+      dropoffAt: formatDateTime(reservation.dropoff?.at),
+      total: totalStr,
+      currency: reservation.pricing?.currency || "USD",
     };
 
-    // Email to customer
-    if (customer && customer.email) {
-      await emailService.sendReservationCustomerEmail({
-        to: customer.email,
-        fullName: customer.full_name || "Customer",
-        reservation: reservationData,
-      });
-    }
+    const customerPayload = {
+      fullName: customer?.full_name || "Unknown Customer",
+      email: customer?.email || "",
+      phone: customer?.phone || "",
+    };
 
-    // Email to creator (if different from customer)
-    if (creator && creator.email && !sameUser) {
-      const customerInfo = customer
-        ? `${customer.full_name} (${customer.email})`
-        : "N/A";
-
-      await emailService.sendReservationStaffEmail({
-        to: creator.email,
-        fullName: creator.full_name || "Team Member",
-        reservation: reservationData,
-        customerInfo: customerInfo,
-      });
-    }
+    await Promise.allSettled(
+      staffList.map((staff) =>
+        sendNewBookingStaffAlertEmail({
+          to: staff.email,
+          fullName: staff.full_name || "Team Member",
+          reservation: reservationPayload,
+          customer: customerPayload,
+        })
+      )
+    );
   } catch (err) {
-    // Don't block reservation creation if email fails – just log it
-    console.error("Failed to send reservation created emails:", err);
+    console.error("notifyStaffOfNewBooking error:", err);
   }
 }
 /**
@@ -201,8 +243,13 @@ async function createReservation(createdById, customerUserId, payload) {
       .populate("pickup.branch_id")
       .populate("dropoff.branch_id");
 
-    // Send emails (customer + creator)
-    await sendReservationCreatedEmails(populatedReservation);
+    // Fire-and-forget emails — don't let email failures block the response
+    sendCustomerConfirmationEmail(populatedReservation).catch((err) =>
+      console.error("Customer confirmation email failed:", err)
+    );
+    notifyStaffOfNewBooking(populatedReservation).catch((err) =>
+      console.error("Staff booking alert email failed:", err)
+    );
 
     return populatedReservation;
   } catch (err) {

@@ -492,6 +492,217 @@ async function sendAdminCreatedAccountEmail({
 
 
 
+/**
+ * Staff alert email sent to admins & branch managers when a customer makes a new booking.
+ *
+ * @param {string} to           - recipient email
+ * @param {string} fullName     - recipient name
+ * @param {object} reservation  - { code, pickupAt, dropoffAt, vehicleModelName,
+ *                                   pickupBranchName, dropoffBranchName, total, currency }
+ * @param {object} customer     - { fullName, email, phone }
+ */
+async function sendNewBookingStaffAlertEmail({
+  to,
+  fullName,
+  reservation,
+  customer,
+}) {
+  const subject = `[New Booking] ${reservation.code} — ${customer.fullName}`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Booking Alert</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f1f5f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:30px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(30,58,138,0.10);">
+
+          <!-- ── Header / Logo bar ─────────────────────────────────────── -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e3a8a 0%,#0891b2 100%);padding:0;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <!-- Logo wordmark -->
+                  <td style="padding:28px 36px 20px 36px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color:rgba(255,255,255,0.12);border-radius:8px;padding:10px 18px;">
+                          <span style="color:#ffffff;font-size:22px;font-weight:900;letter-spacing:2px;font-family:Georgia,serif;">Mo</span>
+                          <span style="color:#7dd3fc;font-size:22px;font-weight:900;letter-spacing:2px;font-family:Georgia,serif;">Rental</span>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="color:#bae6fd;margin:8px 0 0 0;font-size:11px;letter-spacing:1px;text-transform:uppercase;">
+                      Zimbabwe's Premium Car Rental
+                    </p>
+                  </td>
+                  <!-- Alert badge -->
+                  <td align="right" style="padding:28px 36px 20px 0;vertical-align:top;">
+                    <div style="display:inline-block;background-color:#f59e0b;border-radius:20px;padding:6px 14px;">
+                      <span style="color:#fff;font-size:11px;font-weight:bold;letter-spacing:1px;">NEW BOOKING</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <!-- Divider stripe -->
+              <div style="height:4px;background:linear-gradient(90deg,#f59e0b 0%,#fbbf24 50%,#f59e0b 100%);"></div>
+            </td>
+          </tr>
+
+          <!-- ── Greeting ───────────────────────────────────────────────── -->
+          <tr>
+            <td style="padding:32px 36px 0 36px;">
+              <h2 style="color:#1e3a8a;font-size:18px;margin:0 0 8px 0;font-weight:bold;">
+                New Booking Alert
+              </h2>
+              <p style="color:#334155;font-size:14px;line-height:1.6;margin:0 0 6px 0;">
+                Dear ${fullName},
+              </p>
+              <p style="color:#334155;font-size:14px;line-height:1.6;margin:0 0 0 0;">
+                A new vehicle booking has been submitted on <strong style="color:#1e3a8a;">Mo Rental</strong>
+                and is awaiting confirmation.
+              </p>
+            </td>
+          </tr>
+
+          <!-- ── Booking reference banner ──────────────────────────────── -->
+          <tr>
+            <td style="padding:20px 36px;">
+              <div style="background:linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%);border:1.5px solid #bfdbfe;border-radius:8px;padding:14px 20px;text-align:center;">
+                <p style="color:#64748b;font-size:11px;margin:0 0 4px 0;letter-spacing:1px;text-transform:uppercase;">Booking Reference</p>
+                <p style="color:#1e3a8a;font-size:22px;font-weight:bold;letter-spacing:3px;margin:0;font-family:'Courier New',monospace;">
+                  ${reservation.code}
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ── Customer Details ──────────────────────────────────────── -->
+          <tr>
+            <td style="padding:0 36px 16px 36px;">
+              <p style="color:#0891b2;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px 0;border-bottom:2px solid #e0f2fe;padding-bottom:6px;">
+                Customer Information
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:5px 0;color:#64748b;font-size:13px;width:140px;">Full Name</td>
+                  <td style="padding:5px 0;color:#1e3a8a;font-size:13px;font-weight:bold;">${customer.fullName}</td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 0;color:#64748b;font-size:13px;">Email</td>
+                  <td style="padding:5px 0;color:#334155;font-size:13px;">${customer.email || "—"}</td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 0;color:#64748b;font-size:13px;">Phone</td>
+                  <td style="padding:5px 0;color:#334155;font-size:13px;">${customer.phone || "—"}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ── Booking Details ───────────────────────────────────────── -->
+          <tr>
+            <td style="padding:0 36px 16px 36px;">
+              <p style="color:#0891b2;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;margin:0 0 10px 0;border-bottom:2px solid #e0f2fe;padding-bottom:6px;">
+                Booking Details
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:5px 0;color:#64748b;font-size:13px;width:140px;">Vehicle</td>
+                  <td style="padding:5px 0;color:#1e3a8a;font-size:13px;font-weight:bold;">${reservation.vehicleModelName || "—"}</td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 0;color:#64748b;font-size:13px;">Pickup Branch</td>
+                  <td style="padding:5px 0;color:#334155;font-size:13px;">${reservation.pickupBranchName || "—"}</td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 0;color:#64748b;font-size:13px;">Pickup Date</td>
+                  <td style="padding:5px 0;color:#334155;font-size:13px;">${reservation.pickupAt}</td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 0;color:#64748b;font-size:13px;">Drop-off Branch</td>
+                  <td style="padding:5px 0;color:#334155;font-size:13px;">${reservation.dropoffBranchName || "—"}</td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 0;color:#64748b;font-size:13px;">Drop-off Date</td>
+                  <td style="padding:5px 0;color:#334155;font-size:13px;">${reservation.dropoffAt}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ── Total Amount ──────────────────────────────────────────── -->
+          <tr>
+            <td style="padding:0 36px 28px 36px;">
+              <div style="background-color:#1e3a8a;border-radius:8px;padding:14px 20px;display:flex;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="color:#bae6fd;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Total Amount</td>
+                    <td align="right" style="color:#ffffff;font-size:20px;font-weight:bold;">
+                      ${reservation.currency || "USD"} ${reservation.total || "—"}
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ── Action notice ─────────────────────────────────────────── -->
+          <tr>
+            <td style="padding:0 36px 28px 36px;">
+              <div style="background-color:#fef3c7;border-left:4px solid #f59e0b;border-radius:4px;padding:14px 16px;">
+                <p style="color:#92400e;font-size:12px;font-weight:bold;margin:0 0 4px 0;text-transform:uppercase;">
+                  Action Required
+                </p>
+                <p style="color:#b45309;font-size:12px;margin:0;line-height:1.5;">
+                  Please log in to the Mo Rental dashboard to review and confirm this booking.
+                  The customer is awaiting payment instructions.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ── Footer ───────────────────────────────────────────────── -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e3a8a 0%,#0891b2 100%);padding:22px 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="color:#bae6fd;font-size:11px;margin:0 0 4px 0;font-weight:bold;letter-spacing:1px;">
+                      Mo Rental · Staff Notification System
+                    </p>
+                    <p style="color:#7dd3fc;font-size:10px;margin:0;line-height:1.5;">
+                      This is an automated internal alert. Do not reply to this email.<br>
+                      © ${new Date().getFullYear()} Mo Rental Zimbabwe. All rights reserved.
+                    </p>
+                  </td>
+                  <td align="right" style="vertical-align:bottom;">
+                    <p style="color:#e0f2fe;font-size:10px;margin:0;">
+                      ${new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  await sendEmail({ to, subject, html });
+}
+
 module.exports = {
   sendEmail,
   sendVerificationEmail,
@@ -501,5 +712,6 @@ module.exports = {
   sendRentalConfirmationEmail,
   generateEmailTemplate,
   generateDocumentTemplate,
-  sendAdminCreatedAccountEmail
+  sendAdminCreatedAccountEmail,
+  sendNewBookingStaffAlertEmail,
 };

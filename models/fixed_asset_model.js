@@ -19,10 +19,14 @@ const FixedAssetSchema = new Schema(
     vehicle_id: {
       type: ObjectId,
       ref: "Vehicle",
-      required: true,
+      default: null,
       unique: true,
+      sparse: true,
       index: true,
     },
+    is_vehicle: { type: Boolean, default: true },
+    asset_name: { type: String, trim: true, default: "" },
+
     branch_id: {
       type: ObjectId,
       ref: "Branch",

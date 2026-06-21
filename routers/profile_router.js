@@ -449,6 +449,13 @@ router.get("/:id", authMiddleware, profileController.getProfileById);
  */
 router.patch("/:id", authMiddleware, profileController.updateProfile);
 
+router.patch(
+  "/:id/kyc",
+  authMiddleware,
+  agentManagerAdmin,
+  profileController.updateKycStatus
+);
+
 /**
  * @swagger
  * /api/v1/profiles/{id}:
