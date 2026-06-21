@@ -5,6 +5,7 @@ const PromoCode = require("../models/promo_code_model");
 const Reservation = require("../models/reservations_model");
 const DriverProfile = require("../models/drivers_profile_model");
 const RatePlan = require("../models/rate_plan_model");
+const { Profile } = require("../models/profile_models");
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function toFloat(d128) {
@@ -48,7 +49,7 @@ async function fetchActivePlans() {
 async function getCustomerHomeData(userId) {
   const now = new Date();
 
-  const [featuredVehicles, branches, promos, activeReservation, driverProfile, availableDrivers, ratePlans] =
+  const [featuredVehicles, branches, promos, activeReservation, driverProfile, availableDrivers, ratePlans, customerProfile] =
     await Promise.all([
       Vehicle.find({ availability_state: "available", status: "active" })
         .populate("vehicle_model_id", "make model year class transmission fuel_type seats images")
@@ -84,6 +85,10 @@ async function getCustomerHomeData(userId) {
         .lean(),
 
       fetchActivePlans(),
+
+      Profile.findOne({ user: userId, role: "customer" })
+        .select("kyc_status kyc_rejection_reason")
+        .lean(),
     ]);
 
   const vehiclesWithRates = featuredVehicles.map((v) => ({
@@ -107,6 +112,11 @@ async function getCustomerHomeData(userId) {
     driver_profile: driverProfile || null,
     available_drivers: availableDrivers,
     stats: { total_available_vehicles: totalVehicles, total_branches: totalBranches, total_drivers: totalDrivers },
+    customer_profile: {
+      has_profile: !!customerProfile,
+      kyc_status: customerProfile?.kyc_status || "not_submitted",
+      kyc_rejection_reason: customerProfile?.kyc_rejection_reason || null,
+    },
   };
 }
 

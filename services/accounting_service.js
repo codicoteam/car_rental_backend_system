@@ -1365,11 +1365,72 @@ async function getFixedAssets(user, query) {
     };
   });
 
+  // Non-vehicle fixed assets (office equipment, generators, etc.)
+  const nonVehicleMatch = { vehicle_id: null };
+  if (branchIds) nonVehicleMatch.branch_id = { $in: branchIds };
+  const nonVehicleAssets = await FixedAsset.find(nonVehicleMatch)
+    .populate("created_by", "full_name email")
+    .populate("updated_by", "full_name email")
+    .populate("branch_id", "name code")
+    .lean();
+
+  for (const asset of nonVehicleAssets) {
+    const dep = calcAssetDepreciation(asset, asOfDate, 0);
+    if (dep) {
+      totalCost += dep.cost;
+      totalAccumDep += dep.accumulated_depreciation;
+      totalNBV += dep.net_book_value;
+      if (dep.annual_depreciation) totalAnnualDep += dep.annual_depreciation;
+    }
+    const flags = [];
+    if (dep?.is_fully_depreciated && !asset.disposal_date) flags.push("FULLY_DEP_ACTIVE");
+    if (dep?.pct_depreciated > 80 && !dep.is_fully_depreciated) flags.push("NEAR_END_OF_LIFE");
+    if (asset.disposal_date && dep?.disposal_gain_loss !== null) {
+      flags.push(dep.disposal_gain_loss < 0 ? "DISPOSAL_LOSS" : "DISPOSAL_GAIN");
+    }
+    rows.push({
+      vehicle_id: null,
+      is_vehicle: false,
+      asset_name: asset.asset_name,
+      plate_number: null,
+      make: null,
+      model: null,
+      year: null,
+      branch: asset.branch_id?.name,
+      branch_id: asset.branch_id?._id,
+      vehicle_status: null,
+      odometer_km: 0,
+      has_asset_record: true,
+      asset: {
+        _id: asset._id,
+        acquisition_cost: d128(asset.acquisition_cost),
+        acquisition_date: asset.acquisition_date,
+        useful_life_years: asset.useful_life_years,
+        salvage_value: d128(asset.salvage_value),
+        depreciation_method: asset.depreciation_method,
+        declining_rate_pct: asset.declining_rate_pct,
+        total_expected_km: asset.total_expected_km,
+        disposal_date: asset.disposal_date,
+        disposal_amount: asset.disposal_amount ? d128(asset.disposal_amount) : null,
+        disposal_notes: asset.disposal_notes,
+        notes: asset.notes,
+        created_by: asset.created_by,
+        updated_by: asset.updated_by,
+        created_at: asset.created_at,
+        updated_at: asset.updated_at,
+        change_log: asset.change_log || [],
+      },
+      depreciation: dep,
+      flags,
+    });
+  }
+
   return {
     as_of: asOfDate,
     vehicles_in_scope: vehicles.length,
     registered: fixedAssets.length,
     unregistered: vehicles.length - fixedAssets.length,
+    other_assets: nonVehicleAssets.length,
     totals: {
       cost: totalCost,
       accumulated_depreciation: totalAccumDep,
@@ -1381,17 +1442,25 @@ async function getFixedAssets(user, query) {
 }
 
 async function createFixedAsset(user, body) {
-  const { vehicle_id, branch_id, acquisition_cost, acquisition_date,
+  const { vehicle_id, branch_id, is_vehicle, asset_name, acquisition_cost, acquisition_date,
           useful_life_years, salvage_value, depreciation_method,
           declining_rate_pct, total_expected_km, notes } = body;
 
-  const existing = await FixedAsset.findOne({ vehicle_id });
-  if (existing) throw new Error("A fixed asset record already exists for this vehicle.");
+  const isVehicle = is_vehicle !== false && !!vehicle_id;
+
+  if (isVehicle) {
+    const existing = await FixedAsset.findOne({ vehicle_id });
+    if (existing) throw new Error("A fixed asset record already exists for this vehicle.");
+  } else if (!asset_name || !asset_name.trim()) {
+    throw new Error("Asset name is required for non-vehicle assets.");
+  }
 
   const D = (v) => mongoose.Types.Decimal128.fromString(String(parseFloat(v) || 0));
 
   const asset = await FixedAsset.create({
-    vehicle_id,
+    vehicle_id: isVehicle ? vehicle_id : null,
+    is_vehicle: isVehicle,
+    asset_name: isVehicle ? "" : asset_name.trim(),
     branch_id,
     acquisition_cost: D(acquisition_cost),
     acquisition_date: new Date(acquisition_date),
@@ -1404,17 +1473,18 @@ async function createFixedAsset(user, body) {
     created_by: user._id,
   });
 
-  // Sync to vehicle.accounting for quick lookups
-  await Vehicle.updateOne(
-    { _id: vehicle_id },
-    {
-      $set: {
-        "accounting.purchase_price": parseFloat(acquisition_cost) || 0,
-        "accounting.purchased_at": new Date(acquisition_date),
-        "accounting.currency": "USD",
-      },
-    }
-  );
+  if (isVehicle) {
+    await Vehicle.updateOne(
+      { _id: vehicle_id },
+      {
+        $set: {
+          "accounting.purchase_price": parseFloat(acquisition_cost) || 0,
+          "accounting.purchased_at": new Date(acquisition_date),
+          "accounting.currency": "USD",
+        },
+      }
+    );
+  }
 
   return asset;
 }

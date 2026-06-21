@@ -17,7 +17,10 @@ async function listProfiles({ role, userId } = {}) {
   if (role) filter.role = role;
   if (userId) filter.user = userId;
 
-  const profiles = await Profile.find(filter).sort({ created_at: -1 });
+  const profiles = await Profile.find(filter)
+    .populate("created_by", "full_name email")
+    .populate("kyc_reviewed_by", "full_name email")
+    .sort({ created_at: -1 });
 
   return {
     profiles,
@@ -29,7 +32,9 @@ async function listProfiles({ role, userId } = {}) {
  * Get a profile by _id
  */
 async function getProfileById(profileId) {
-  return Profile.findById(profileId);
+  return Profile.findById(profileId)
+    .populate("created_by", "full_name email")
+    .populate("kyc_reviewed_by", "full_name email");
 }
 
 /**
@@ -90,6 +95,7 @@ async function createAgentProfileByStaff(actorUserId, targetUserId, data = {}) {
     gdpr: data.gdpr,
     branch_id: data.branch_id,
     can_apply_discounts: !!data.can_apply_discounts,
+    created_by: actorUserId,
     ...(typeof data.verified === "boolean" ? { verified: data.verified } : {}),
   });
 
@@ -131,6 +137,7 @@ async function createManagerProfileByStaff(
     gdpr: data.gdpr,
     branch_ids: data.branch_ids || [],
     approval_limit_usd: data.approval_limit_usd || 0,
+    created_by: actorUserId,
   });
 
   return profile;
@@ -185,7 +192,10 @@ async function deleteProfile(profileId) {
  * Get all profiles for a user (across all roles)
  */
 async function getProfilesByUserId(userId) {
-  return Profile.find({ user: userId }).sort({ created_at: -1 });
+  return Profile.find({ user: userId })
+    .populate("created_by", "full_name email")
+    .populate("kyc_reviewed_by", "full_name email")
+    .sort({ created_at: -1 });
 }
 
 
@@ -218,6 +228,7 @@ async function createBranchReceptionistProfileByStaff(
     preferences: data.preferences,
     gdpr: data.gdpr,
     branch_ids: data.branch_ids || [],
+    created_by: actorUserId,
   });
 
   return profile;

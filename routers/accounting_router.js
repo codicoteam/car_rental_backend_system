@@ -6,6 +6,7 @@ const ctrl = require("../controllers/accounting_controller");
 const ALL    = ["admin", "executive_admin", "manager", "branch_receptionist"];
 const SENIOR = ["admin", "executive_admin", "manager"];
 const ADMIN  = ["admin", "executive_admin"];
+const ADMIN_ONLY = ["admin", "manager"];
 
 router.use(authMiddleware);
 
@@ -28,9 +29,9 @@ router.get("/balance-entries",   requireRoles(...ALL),    ctrl.getBalanceEntries
 router.post("/fixed-assets",          requireRoles(...SENIOR), ctrl.createFixedAsset);
 router.put("/fixed-assets/:id",       requireRoles(...SENIOR), ctrl.updateFixedAsset);
 
-// ── Tier 2 — balance entries (admin/exec only — these affect the BS) ──────────
-router.post("/balance-entries",       requireRoles(...ADMIN),  ctrl.createBalanceEntry);
-router.put("/balance-entries/:id",    requireRoles(...ADMIN),  ctrl.updateBalanceEntry);
-router.delete("/balance-entries/:id", requireRoles(...ADMIN),  ctrl.deleteBalanceEntry);
+// ── Tier 2 — balance entries (admin only — these affect the BS) ───────────────
+router.post("/balance-entries",       requireRoles(...ADMIN_ONLY),  ctrl.createBalanceEntry);
+router.put("/balance-entries/:id",    requireRoles(...ADMIN_ONLY),  ctrl.updateBalanceEntry);
+router.delete("/balance-entries/:id", requireRoles(...ADMIN_ONLY),  ctrl.deleteBalanceEntry);
 
 module.exports = router;

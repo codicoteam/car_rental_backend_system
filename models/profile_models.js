@@ -6,6 +6,8 @@ const DriverLicenseSchema = new Schema(
   {
     number: { type: String, trim: true },
     imageUrl: { type: String, trim: true },
+    front_url: { type: String, trim: true },
+    back_url: { type: String, trim: true },
     country: { type: String, trim: true },
     class: { type: String, trim: true },
     expires_at: { type: Date },
@@ -59,10 +61,21 @@ const BaseProfileSchema = new Schema(
     full_name: { type: String, required: true, trim: true },
     dob: { type: Date },
     national_id: { type: String, trim: true },
+    national_id_front_url: { type: String, trim: true },
+    national_id_back_url: { type: String, trim: true },
     driver_license: { type: DriverLicenseSchema, default: undefined },
     address: { type: AddressSchema, default: undefined },
     preferences: { type: PreferencesSchema, default: undefined },
     gdpr: { type: GdprSchema, default: undefined },
+    kyc_status: {
+      type: String,
+      enum: ["not_submitted", "pending", "verified", "rejected"],
+      default: "not_submitted",
+    },
+    kyc_rejection_reason: { type: String, trim: true },
+    kyc_reviewed_by: { type: Schema.Types.ObjectId, ref: "User" },
+    kyc_reviewed_at: { type: Date },
+    created_by: { type: Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
@@ -132,7 +145,7 @@ BaseProfileSchema.statics.createCustomerProfileByStaff = async function (
     preferences: data.preferences,
     gdpr: data.gdpr,
     loyalty_points: data.loyalty_points,
-    // verified can be optionally set by staff on creation if you want:
+    created_by: actorUserId,
     ...(typeof data.verified === "boolean" ? { verified: data.verified } : {}),
   });
 };
@@ -159,6 +172,7 @@ BaseProfileSchema.statics.createForSelf = async function (userId, role, data = {
     address: data.address,
     preferences: data.preferences,
     gdpr: data.gdpr,
+    created_by: data.created_by ?? userId,
     ...(role === "customer"
       ? {
           loyalty_points: data.loyalty_points,

@@ -395,6 +395,74 @@ async function createBranchReceptionistByStaff(req, res) {
   }
 }
 
+/**
+ * PATCH /api/profiles/:id/kyc
+ * Reviewer (agent/manager/branch_receptionist/admin) approves or rejects KYC.
+ * Auto-records reviewer identity and timestamp.
+ */
+async function updateKycStatus(req, res) {
+  try {
+    const { kyc_status, kyc_rejection_reason } = req.body;
+    const valid = ["not_submitted", "pending", "verified", "rejected"];
+
+    if (!kyc_status || !valid.includes(kyc_status)) {
+      return res.status(400).json({
+        success: false,
+        message: `kyc_status must be one of: ${valid.join(", ")}`,
+      });
+    }
+
+    if (kyc_status === "rejected" && !kyc_rejection_reason?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "kyc_rejection_reason is required when rejecting",
+      });
+    }
+
+    const profile = await profileService.getProfileById(req.params.id);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
+
+    const updateData = {
+      kyc_status,
+      kyc_reviewed_by: req.user._id,
+      kyc_reviewed_at: new Date(),
+      ...(kyc_status === "rejected"
+        ? { kyc_rejection_reason: kyc_rejection_reason.trim() }
+        : { kyc_rejection_reason: "" }),
+      ...(kyc_status === "verified" ? { verified: true } : {}),
+      ...(kyc_status === "rejected" ? { verified: false } : {}),
+    };
+
+    const updated = await profileService.updateProfile(req.params.id, updateData);
+
+    auditService.log({
+      user_id: profile.user,
+      actor_id: req.user._id,
+      action: "profile_updated",
+      entity_type: "profile",
+      entity_id: updated._id,
+      description: `KYC status set to '${kyc_status}'`,
+      metadata: { kyc_status, kyc_rejection_reason },
+      ip_address: req.ip,
+      user_agent: req.headers["user-agent"],
+    });
+
+    return res.json({
+      success: true,
+      message: `KYC status updated to '${kyc_status}'`,
+      data: updated,
+    });
+  } catch (error) {
+    console.error("updateKycStatus error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update KYC status",
+    });
+  }
+}
+
 module.exports = {
   createSelfProfile,
   createCustomerByStaff,
@@ -406,5 +474,6 @@ module.exports = {
   getProfileById,
   updateProfile,
   deleteProfile,
-  getProfilesByUserId
+  getProfilesByUserId,
+  updateKycStatus,
 };
