@@ -1,6 +1,7 @@
 // controllers/reservations_controller.js
 const reservationService = require("../services/reservations_service");
 const notifHelper = require("../services/notification_helper");
+const pushSvc = require("../services/push_notification_service");
 const User = require("../models/user_model");
 const { sendReservationStatusUpdateEmail } = require("../utils/user_email_utils");
 
@@ -227,7 +228,7 @@ async function updateReservationStatus(req, res) {
       status
     );
 
-    // Fire-and-forget: push notification + email to customer
+    // Fire-and-forget: push + in-app + email to customer (all logged)
     const statusNotifMessages = {
       pending:     { title: "Reservation Pending",      message: "Your reservation is pending review by our team." },
       confirmed:   { title: "Reservation Confirmed",    message: "Your reservation has been confirmed. Please complete payment to secure your booking." },
@@ -242,41 +243,82 @@ async function updateReservationStatus(req, res) {
 
     const notif = statusNotifMessages[status] || { title: "Reservation Updated", message: `Your reservation status has been updated to ${status}.` };
     const customerId = reservation.user_id;
+    const reservationCode = reservation.code || String(reservation._id).slice(-8).toUpperCase();
 
-    notifHelper.sendToUser({
-      userId: customerId,
-      title: notif.title,
-      message: notif.message,
-      type: "reservation",
-      channels: ["in_app", "push"],
-      actionUrl: "/reservations",
-    });
+    console.log(`[StatusNotif] Status changed → ${reservationCode} | status: ${status} | customer: ${customerId}`);
 
     (async () => {
       try {
-        const customer = await User.findById(customerId).select("email full_name");
-        if (customer?.email) {
-          const pickupAt = reservation.pickup?.at
-            ? new Date(reservation.pickup.at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-            : undefined;
-          const dropoffAt = reservation.dropoff?.at
-            ? new Date(reservation.dropoff.at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-            : undefined;
-
-          await sendReservationStatusUpdateEmail({
-            to: customer.email,
-            fullName: customer.full_name || "Customer",
-            status,
-            reservation: {
-              code: reservation.code,
-              vehicleModelName: reservation.vehicle_model_id?.name,
-              pickupAt,
-              dropoffAt,
-            },
-          });
+        const customer = await User.findById(customerId).select("email full_name fcm_tokens");
+        if (!customer) {
+          console.warn(`[StatusNotif] Customer not found for id: ${customerId} — skipping all notifications`);
+          return;
         }
+
+        // ── 1. In-app notification (stored in DB, polled by mobile) ──────────
+        notifHelper.sendToUser({
+          userId: customerId,
+          title: notif.title,
+          message: notif.message,
+          type: "booking",
+          channels: ["in_app"],
+          actionUrl: "/reservations",
+        });
+        console.log(`[StatusNotif] In-app notification queued → ${customer.email}`);
+
+        // ── 2. Push notification (FCM direct, full logging) ───────────────────
+        const fcmTokens = Array.isArray(customer.fcm_tokens) ? customer.fcm_tokens.filter(Boolean) : [];
+        if (fcmTokens.length > 0) {
+          try {
+            const pushResult = await pushSvc.sendToTokens(fcmTokens, {
+              title: notif.title,
+              body: notif.message,
+              data: {
+                type: "reservation",
+                action_url: "/reservations",
+                reservation_code: reservationCode,
+                status,
+              },
+            });
+            console.log(`[StatusNotif] Push → ${customer.email} | tokens: ${fcmTokens.length} | success: ${pushResult?.successCount ?? "?"} | failed: ${pushResult?.failureCount ?? "?"}`);
+          } catch (pushErr) {
+            console.error(`[StatusNotif] Push FAILED → ${customer.email}:`, pushErr.message);
+          }
+        } else {
+          console.warn(`[StatusNotif] No FCM tokens for ${customer.email} — push skipped (user needs to log in on mobile)`);
+        }
+
+        // ── 3. Email notification ─────────────────────────────────────────────
+        if (customer.email) {
+          try {
+            const pickupAt = reservation.pickup?.at
+              ? new Date(reservation.pickup.at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+              : undefined;
+            const dropoffAt = reservation.dropoff?.at
+              ? new Date(reservation.dropoff.at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+              : undefined;
+
+            await sendReservationStatusUpdateEmail({
+              to: customer.email,
+              fullName: customer.full_name || "Customer",
+              status,
+              reservation: {
+                code: reservationCode,
+                vehicleModelName: reservation.vehicle_model_id?.name,
+                pickupAt,
+                dropoffAt,
+              },
+            });
+            console.log(`[StatusNotif] Email sent → ${customer.email} | status: ${status}`);
+          } catch (emailErr) {
+            console.error(`[StatusNotif] Email FAILED → ${customer.email}:`, emailErr.message);
+          }
+        } else {
+          console.warn(`[StatusNotif] No email address for user ${customerId} — email skipped`);
+        }
+
       } catch (err) {
-        console.error("[StatusNotif] Failed to send email:", err.message);
+        console.error(`[StatusNotif] Notification pipeline error for ${reservationCode}:`, err.message);
       }
     })();
 
