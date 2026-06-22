@@ -152,6 +152,8 @@ async function updateProfile(profileId, data = {}) {
     "full_name",
     "dob",
     "national_id",
+    "national_id_front_url",
+    "national_id_back_url",
     "driver_license",
     "address",
     "preferences",
@@ -163,6 +165,10 @@ async function updateProfile(profileId, data = {}) {
     "can_apply_discounts",
     "approval_limit_usd",
     "super_admin",
+    "kyc_status",
+    "kyc_reviewed_by",
+    "kyc_reviewed_at",
+    "kyc_rejection_reason",
   ];
 
   const update = {};
