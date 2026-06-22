@@ -178,10 +178,29 @@ async function updateProfile(profileId, data = {}) {
     }
   }
 
+  // Decompose nested subdocuments into dot-notation so $set only touches
+  // the provided sub-fields instead of replacing the entire subdocument.
+  for (const [parent, subFields] of [
+    ["driver_license", ["number", "front_url", "back_url", "class", "expires_at", "verified", "country", "imageUrl"]],
+    ["address", ["line1", "line2", "city", "region", "postal_code", "country"]],
+    ["preferences", ["currency", "locale"]],
+    ["gdpr", ["marketing_opt_in"]],
+  ]) {
+    if (update[parent] && typeof update[parent] === "object") {
+      const sub = update[parent];
+      delete update[parent];
+      for (const field of subFields) {
+        if (sub[field] !== undefined) {
+          update[`${parent}.${field}`] = sub[field];
+        }
+      }
+    }
+  }
+
   const profile = await Profile.findByIdAndUpdate(
     profileId,
     { $set: update },
-    { new: true }
+    { new: true, runValidators: false }
   );
 
   return profile;
