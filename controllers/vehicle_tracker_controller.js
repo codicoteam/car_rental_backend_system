@@ -253,7 +253,9 @@ async function getLastLocationForVehicle(req, res) {
 
     res.json({ success: true, data });
   } catch (err) {
-    console.error("getLastLocationForVehicle error:", err);
+    if (err.statusCode !== 404) {
+      console.error("getLastLocationForVehicle error:", err);
+    }
     res.status(err.statusCode || 500).json({
       success: false,
       message: err.message || "Failed to fetch last known location.",
