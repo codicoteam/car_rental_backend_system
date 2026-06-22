@@ -703,6 +703,95 @@ async function sendNewBookingStaffAlertEmail({
   await sendEmail({ to, subject, html });
 }
 
+/**
+ * Send reservation status update email to customer
+ *
+ * @param {string} to
+ * @param {string} fullName
+ * @param {string} status  - one of the reservation status enum values
+ * @param {object} reservation  - { code, vehicleModelName?, pickupAt?, dropoffAt? }
+ */
+async function sendReservationStatusUpdateEmail({ to, fullName, status, reservation }) {
+  const statusConfig = {
+    pending:     { label: "Pending",             color: "#f59e0b", badge: "PENDING" },
+    confirmed:   { label: "Confirmed",           color: "#10b981", badge: "CONFIRMED" },
+    checked_out: { label: "Checked Out",         color: "#0891b2", badge: "CHECKED OUT" },
+    checked_in:  { label: "Checked In",          color: "#6366f1", badge: "CHECKED IN" },
+    returned:    { label: "Returned",            color: "#8b5cf6", badge: "RETURNED" },
+    completed:   { label: "Completed",           color: "#10b981", badge: "COMPLETED" },
+    closed:      { label: "Closed",              color: "#64748b", badge: "CLOSED" },
+    cancelled:   { label: "Cancelled",           color: "#ef4444", badge: "CANCELLED" },
+    no_show:     { label: "No Show",             color: "#f97316", badge: "NO SHOW" },
+  };
+
+  const statusMessages = {
+    pending:     "Your reservation is currently pending review by our team. We will update you shortly.",
+    confirmed:   "Great news! Your reservation has been confirmed. Please ensure payment is completed and bring your driver's licence on the pickup date.",
+    checked_out: "Your vehicle has been checked out and is ready for use. Please handle the vehicle with care and return it at the agreed date and time.",
+    checked_in:  "Your vehicle return has been received by our team and is being processed.",
+    returned:    "Your vehicle return has been successfully recorded by our team.",
+    completed:   "Your reservation has been completed. Thank you for choosing Mo Rental!",
+    closed:      "Your reservation has been closed. We hope you had a great experience with Mo Rental. We look forward to serving you again.",
+    cancelled:   "Your reservation has been cancelled. If you believe this is an error or need assistance, please contact our customer support team.",
+    no_show:     "Your reservation was marked as no-show as we did not receive a vehicle pickup. Please contact our team if you need further assistance.",
+  };
+
+  const cfg = statusConfig[status] || { label: status, color: "#334155", badge: status.toUpperCase() };
+  const body = statusMessages[status] || `Your reservation status has been updated to ${cfg.label}.`;
+  const subject = `Reservation ${reservation.code ? reservation.code + " — " : ""}Status Update: ${cfg.label}`;
+
+  const detailsHtml = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background-color:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;">
+      <tr>
+        <td style="padding:16px 20px;">
+          <p style="color:#1e3a8a;font-size:11px;margin:0 0 12px 0;font-weight:bold;border-bottom:2px solid #0891b2;padding-bottom:6px;letter-spacing:1px;text-transform:uppercase;">
+            Reservation Details
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${reservation.code ? `
+            <tr>
+              <td style="padding:5px 0;color:#64748b;font-size:12px;width:140px;">Reference</td>
+              <td style="padding:5px 0;color:#1e3a8a;font-size:13px;font-weight:bold;letter-spacing:1px;">${reservation.code}</td>
+            </tr>` : ""}
+            ${reservation.vehicleModelName ? `
+            <tr>
+              <td style="padding:5px 0;color:#64748b;font-size:12px;">Vehicle</td>
+              <td style="padding:5px 0;color:#334155;font-size:12px;">${reservation.vehicleModelName}</td>
+            </tr>` : ""}
+            ${reservation.pickupAt ? `
+            <tr>
+              <td style="padding:5px 0;color:#64748b;font-size:12px;">Pickup Date</td>
+              <td style="padding:5px 0;color:#334155;font-size:12px;">${reservation.pickupAt}</td>
+            </tr>` : ""}
+            ${reservation.dropoffAt ? `
+            <tr>
+              <td style="padding:5px 0;color:#64748b;font-size:12px;">Return Date</td>
+              <td style="padding:5px 0;color:#334155;font-size:12px;">${reservation.dropoffAt}</td>
+            </tr>` : ""}
+            <tr>
+              <td style="padding:8px 0 0 0;color:#64748b;font-size:12px;">New Status</td>
+              <td style="padding:8px 0 0 0;">
+                <span style="background-color:${cfg.color};color:#fff;font-size:11px;font-weight:bold;padding:3px 12px;border-radius:12px;letter-spacing:1px;">
+                  ${cfg.badge}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const message = `
+    <p style="margin:0 0 14px 0;">Dear ${fullName},</p>
+    <p style="margin:0 0 14px 0;">${body}</p>
+    <p style="margin:0;">If you have any questions, please do not hesitate to contact our support team.</p>
+  `;
+
+  const html = generateDocumentTemplate({ title: "Reservation Status Update", message, details: detailsHtml });
+  await sendEmail({ to, subject, html });
+}
+
 module.exports = {
   sendEmail,
   sendVerificationEmail,
@@ -714,4 +803,5 @@ module.exports = {
   generateDocumentTemplate,
   sendAdminCreatedAccountEmail,
   sendNewBookingStaffAlertEmail,
+  sendReservationStatusUpdateEmail,
 };
