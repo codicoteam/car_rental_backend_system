@@ -206,33 +206,6 @@ router.get(
 /**
  * @swagger
  * /api/v1/rate-plans/{id}:
- *   get:
- *     summary: Get a rate plan by ID
- *     tags: [RatePlans]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Rate plan ID
- *     responses:
- *       200:
- *         description: Rate plan found
- *       404:
- *         description: Rate plan not found
- */
-router.get(
-  "/:id",
-  authMiddleware, 
-  ratePlanController.getRatePlanById
-);
-
-/**
- * @swagger
- * /api/v1/rate-plans/{id}:
  *   patch:
  *     summary: Update a rate plan
  *     tags: [RatePlans]
@@ -415,6 +388,33 @@ router.get(
   "/by-class/:vehicleClass",
   authMiddleware,
   ratePlanController.getRatePlansByClass
+);
+
+/**
+ * @swagger
+ * /api/v1/rate-plans/{id}:
+ *   get:
+ *     summary: Get a rate plan by ID
+ *     tags: [RatePlans]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Rate plan ID
+ *     responses:
+ *       200:
+ *         description: Rate plan found
+ *       404:
+ *         description: Rate plan not found
+ */
+router.get(
+  "/:id",
+  authMiddleware,
+  ratePlanController.getRatePlanById
 );
 
 module.exports = router;
