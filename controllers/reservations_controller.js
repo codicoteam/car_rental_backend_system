@@ -1,6 +1,8 @@
 // controllers/reservations_controller.js
 const reservationService = require("../services/reservations_service");
 const notifHelper = require("../services/notification_helper");
+const User = require("../models/user_model");
+const { sendReservationStatusUpdateEmail } = require("../utils/user_email_utils");
 
 function hasRole(user, role) {
   return Array.isArray(user.roles) && user.roles.includes(role);
@@ -224,6 +226,59 @@ async function updateReservationStatus(req, res) {
       req.params.id,
       status
     );
+
+    // Fire-and-forget: push notification + email to customer
+    const statusNotifMessages = {
+      pending:     { title: "Reservation Pending",      message: "Your reservation is pending review by our team." },
+      confirmed:   { title: "Reservation Confirmed",    message: "Your reservation has been confirmed. Please complete payment to secure your booking." },
+      checked_out: { title: "Vehicle Checked Out",      message: "Your vehicle has been checked out. Drive safely and return it at the agreed time." },
+      checked_in:  { title: "Vehicle Checked In",       message: "Your vehicle return has been received and is being processed by our team." },
+      returned:    { title: "Vehicle Return Processed", message: "Your vehicle return has been successfully recorded." },
+      completed:   { title: "Reservation Completed",    message: "Your reservation is complete. Thank you for choosing Mo Rental!" },
+      closed:      { title: "Reservation Closed",       message: "Your reservation has been closed. We hope you had a great experience!" },
+      cancelled:   { title: "Reservation Cancelled",    message: "Your reservation has been cancelled. Contact support if you need assistance." },
+      no_show:     { title: "Reservation: No Show",     message: "Your reservation was marked as no-show. Contact support if this is an error." },
+    };
+
+    const notif = statusNotifMessages[status] || { title: "Reservation Updated", message: `Your reservation status has been updated to ${status}.` };
+    const customerId = reservation.user_id;
+
+    notifHelper.sendToUser({
+      userId: customerId,
+      title: notif.title,
+      message: notif.message,
+      type: "reservation",
+      channels: ["in_app", "push"],
+      actionUrl: "/reservations",
+    });
+
+    (async () => {
+      try {
+        const customer = await User.findById(customerId).select("email full_name");
+        if (customer?.email) {
+          const pickupAt = reservation.pickup?.at
+            ? new Date(reservation.pickup.at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+            : undefined;
+          const dropoffAt = reservation.dropoff?.at
+            ? new Date(reservation.dropoff.at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+            : undefined;
+
+          await sendReservationStatusUpdateEmail({
+            to: customer.email,
+            fullName: customer.full_name || "Customer",
+            status,
+            reservation: {
+              code: reservation.code,
+              vehicleModelName: reservation.vehicle_model_id?.name,
+              pickupAt,
+              dropoffAt,
+            },
+          });
+        }
+      } catch (err) {
+        console.error("[StatusNotif] Failed to send email:", err.message);
+      }
+    })();
 
     return res.json({
       success: true,
