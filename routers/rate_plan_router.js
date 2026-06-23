@@ -205,6 +205,39 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/rate-plans/upsert:
+ *   put:
+ *     summary: Create or replace the rate plan for a vehicle unit/model scope
+ *     description: |
+ *       Finds an existing plan by vehicle_id or vehicle_model_id and replaces all its fields,
+ *       or creates a new plan if none exists. Requires manager or admin role.
+ *     tags: [RatePlans]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/RatePlan"
+ *     responses:
+ *       200:
+ *         description: Rate plan saved successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.put(
+  "/upsert",
+  authMiddleware,
+  ratePlanController.upsertRatePlan
+);
+
+/**
+ * @swagger
  * /api/v1/rate-plans/{id}:
  *   patch:
  *     summary: Update a rate plan
