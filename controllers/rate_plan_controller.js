@@ -41,6 +41,7 @@ async function createRatePlan(req, res) {
       code: error.code || "RATE_PLAN_CREATE_ERROR",
       message: error.message || "Failed to create rate plan",
       ...(error.details ? { details: error.details } : {}),
+      ...(error.existingId ? { existingId: error.existingId } : {}),
     });
   }
 }
@@ -168,6 +169,40 @@ async function deleteRatePlan(req, res) {
 }
 
 /**
+ * PUT /api/rate-plans/upsert
+ * Creates or fully replaces the rate plan for the given vehicle_id / vehicle_model_id scope.
+ */
+async function upsertRatePlan(req, res) {
+  try {
+    const { user } = req;
+
+    if (!isPricingStaff(user)) {
+      return res.status(403).json({
+        success: false,
+        code: "RATE_PLAN_FORBIDDEN",
+        message: "Only manager/admin can upsert rate plans",
+      });
+    }
+
+    const plan = await ratePlanService.upsertRatePlan(req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: "Rate plan saved successfully",
+      data: plan,
+    });
+  } catch (error) {
+    console.error("upsertRatePlan error:", error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      code: error.code || "RATE_PLAN_UPSERT_ERROR",
+      message: error.message || "Failed to upsert rate plan",
+      ...(error.details ? { details: error.details } : {}),
+    });
+  }
+}
+
+/**
  * GET /api/rate-plans/by-vehicle/:vehicleId
  */
 async function getRatePlansByVehicle(req, res) {
@@ -244,6 +279,7 @@ async function getRatePlansByClass(req, res) {
 
 module.exports = {
   createRatePlan,
+  upsertRatePlan,
   listRatePlans,
   getRatePlanById,
   updateRatePlan,

@@ -40,9 +40,29 @@ function buildRatePlanFilter(query = {}) {
 }
 
 /**
- * Create a rate plan
+ * Create a rate plan — rejects with 409 if one already exists for the same vehicle_id or vehicle_model_id
  */
 async function createRatePlan(payload) {
+  if (payload.vehicle_id) {
+    const existing = await RatePlan.findOne({ vehicle_id: payload.vehicle_id }).lean();
+    if (existing) {
+      const err = new Error("A rate plan already exists for this vehicle unit");
+      err.statusCode = 409;
+      err.code = "RATE_PLAN_DUPLICATE";
+      err.existingId = existing._id.toString();
+      throw err;
+    }
+  } else if (payload.vehicle_model_id) {
+    const existing = await RatePlan.findOne({ vehicle_model_id: payload.vehicle_model_id }).lean();
+    if (existing) {
+      const err = new Error("A rate plan already exists for this vehicle model");
+      err.statusCode = 409;
+      err.code = "RATE_PLAN_DUPLICATE";
+      err.existingId = existing._id.toString();
+      throw err;
+    }
+  }
+
   try {
     const plan = await RatePlan.create(payload);
     return plan;
@@ -50,6 +70,41 @@ async function createRatePlan(payload) {
     const error = new Error("Failed to create rate plan");
     error.statusCode = 400;
     error.code = "RATE_PLAN_CREATE_FAILED";
+    error.details = err.message;
+    throw error;
+  }
+}
+
+/**
+ * Upsert a rate plan — replaces the existing plan for the same vehicle_id/vehicle_model_id scope,
+ * or creates a new one if none exists. Scoped to vehicle_id first, vehicle_model_id second.
+ */
+async function upsertRatePlan(payload) {
+  let filter = null;
+  if (payload.vehicle_id) {
+    filter = { vehicle_id: payload.vehicle_id };
+  } else if (payload.vehicle_model_id) {
+    filter = { vehicle_model_id: payload.vehicle_model_id };
+  }
+
+  if (!filter) {
+    return createRatePlan(payload);
+  }
+
+  try {
+    const plan = await RatePlan.findOneAndUpdate(
+      filter,
+      { $set: payload },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    )
+      .populate("branch_id", "name")
+      .populate("vehicle_model_id")
+      .populate("vehicle_id");
+    return plan;
+  } catch (err) {
+    const error = new Error("Failed to upsert rate plan");
+    error.statusCode = 400;
+    error.code = "RATE_PLAN_UPSERT_FAILED";
     error.details = err.message;
     throw error;
   }
@@ -189,6 +244,7 @@ async function findRatePlansByClass(vehicleClass, query = {}) {
 
 module.exports = {
   createRatePlan,
+  upsertRatePlan,
   listRatePlans,
   getRatePlanById,
   updateRatePlan,
