@@ -1,6 +1,7 @@
 // controllers/report_controller.js
 const reportService = require("../services/report_service");
 
+
 function sendError(res, err) {
   const statusCode =
     err?.statusCode ||
@@ -50,7 +51,19 @@ const getManagerReport = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true, data });
 });
 
+const getAdminCharts = asyncHandler(async (req, res) => {
+  const data = await reportService.getAdminChartsData(req.query);
+  return res.status(200).json({ success: true, data });
+});
+
+const getAdminFinancial = asyncHandler(async (req, res) => {
+  const data = await reportService.getAdminFinancialData(req.query);
+  return res.status(200).json({ success: true, data });
+});
+
 module.exports = {
   getAdminReport,
   getManagerReport,
+  getAdminCharts,
+  getAdminFinancial,
 };
