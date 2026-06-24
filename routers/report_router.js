@@ -140,6 +140,20 @@ router.get(
   reportController.getAdminReport
 );
 
+router.get(
+  "/admin/charts",
+  authMiddleware,
+  requireRoles("admin", "executive_admin"),
+  reportController.getAdminCharts
+);
+
+router.get(
+  "/admin/financial",
+  authMiddleware,
+  requireRoles("admin", "executive_admin"),
+  reportController.getAdminFinancial
+);
+
 /**
  * @openapi
  * /api/v1/reports/manager:
